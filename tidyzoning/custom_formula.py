@@ -9,4 +9,4 @@ def custom_formula(x, constant=5):
     Returns:
         float: The result of the formula.
     """
-    return x**2 + 3*x - constant
+    return 2*x - constant
