@@ -2,7 +2,7 @@ Package: tidyzoning
 Type: Package
 Title: Finding housing possibilities using zoning laws
 Version: 0.1.0
-Author: Kamryn Mansfield
+Author: Houpu Li
 Maintainer: Kamryn Mansfield <mansfieldkamryn@gmail.com>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
@@ -10,12 +10,6 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: 
-    dplyr,
-    ggplot2,
-    rjson,
-    sf,
-    terra,
-    units
 RoxygenNote: 7.3.1
 Depends: 
-    R (>= 2.10)
+    Python (>= 3.9.18)
