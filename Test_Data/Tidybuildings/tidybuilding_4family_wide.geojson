@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "fourplex_square",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "units_3bed": 4.0, "total_floors": 3.0, "max_unit_size": 1109.0, "min_unit_size": 1108.0, "floor_area": 4434.0, "building_height": 38.0 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -105.983203921965526, 3.442337223685217 ], [ -105.98307621560015, 3.442343747120621 ], [ -105.983082207816608, 3.442462207466727 ], [ -105.983209914316959, 3.442455684018358 ], [ -105.983203921965526, 3.442337223685217 ] ] ] } }
+]
+}
