@@ -26,12 +26,14 @@ def find_district_idx(tidyparcel, tidyzoning):
     # Perform spatial join to find matches
     joined = gpd.sjoin(centroid_rows, tidyzoning, how='left', predicate='within')
 
-    # Prepare results list
-    results = []
-    for _, row in joined.iterrows():
-        prop_id = row['Prop_ID']
-        parcel_id = row['parcel_id']
-        zoning_index = row['index_right'] if not pd.isna(row['index_right']) else None
-        results.append((prop_id, parcel_id, zoning_index))
+    # Create the DataFrame directly with required columns
+    results_df = pd.DataFrame({
+        "prop_id": joined["Prop_ID"],
+        "object_id": joined["parcel_id"],
+        "zoning_id": joined["index_right"]
+    })
 
-    return results
+    # Replace NaN zoning_id with None for consistency
+    results_df["zoning_id"] = results_df["zoning_id"].where(pd.notna(results_df["zoning_id"]), None)
+
+    return results_df
