@@ -1,28 +1,34 @@
 def find_district_idx(tidyparcel, tidyzoning):
     """
-    Find the index of the district in `tidyzoning` that contains the centroid of the `tidyparcel`.
+    Optimized version: Find the indices of the districts in `tidyzoning` that contain the centroids of the `tidyparcel`.
 
     Parameters:
-    tidyparcel (GeoDataFrame): A GeoDataFrame representing the parcel. The last row is used to find the centroid.
+    tidyparcel (GeoDataFrame): A GeoDataFrame representing the parcel.
+                               Must include rows with 'centroid' in the 'side' column.
     tidyzoning (GeoDataFrame): A GeoDataFrame representing zoning districts with geometries.
 
     Returns:
-    int or None: The index of the district in `tidyzoning` that contains the parcel's centroid.
-                 Returns None if no unique district is found.
+    list of tuples: A list of tuples where each tuple contains:
+                    Prop_ID and Pacel_id are from Tidyparcel
+                    tidyzoning_index are from Tidyzoning
+                    (Prop_ID, parcel_id, tidyzoning_index) if a match is found,
+                    or (Prop_ID, parcel_id, None) if no match is found.
     """
-    # Get the centroid of the last row in tidyparcel
-    parcel_centroid = tidyparcel.iloc[-1].geometry.centroid
-    
-    # Find which tidyzoning geometries contain the centroid
-    contains = tidyzoning['geometry'].apply(lambda geom: geom.contains(parcel_centroid))
-    
-    # Get the index of the district containing the centroid
-    idx = tidyzoning[contains].index.tolist()
-    
-    # Return the index if unique, otherwise return None
-    if len(idx) == 1:
-        print(idx[0])
-        return idx[0]
-    else:
-        print(None)
-        return None
+    # Filter rows with centroids
+    centroid_rows = tidyparcel[tidyparcel['side'] == 'centroid']
+    if centroid_rows.empty:
+        print("No centroids found in tidyparcel.")
+        return []
+
+    # Perform spatial join to find matches
+    joined = gpd.sjoin(centroid_rows, tidyzoning, how='left', predicate='within')
+
+    # Prepare results list
+    results = []
+    for _, row in joined.iterrows():
+        prop_id = row['Prop_ID']
+        parcel_id = row['parcel_id']
+        zoning_index = row['index_right'] if not pd.isna(row['index_right']) else None
+        results.append((prop_id, parcel_id, zoning_index))
+
+    return results
