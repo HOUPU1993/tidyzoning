@@ -33,8 +33,4 @@ def find_district_idx(tidyparcel, tidyzoning):
         "zoning_id": joined["index_right"]
     })
 
-    # Replace NaN zoning_id with None for consistency
-    results_df["zoning_id"] = results_df["zoning_id"].where(pd.notna(results_df["zoning_id"]), None)
-    results_df["zoning_id"] = results_df["zoning_id"].astype(str)
-
     return results_df
