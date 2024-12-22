@@ -1,0 +1,142 @@
+<mxfile host="65bd71144e">
+    <diagram id="EgJB5MEFG3zQbcAHrkri" name="Page-1">
+        <mxGraphModel dx="1463" dy="1055" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="6" style="edgeStyle=elbowEdgeStyle;html=1;fontSize=20;fontColor=#000000;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" style="edgeStyle=elbowEdgeStyle;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=20;fontColor=#000000;strokeColor=#000000;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" style="edgeStyle=elbowEdgeStyle;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#000000;" edge="1" parent="1" source="2" target="4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" style="edgeStyle=elbowEdgeStyle;html=1;strokeColor=#000000;fontSize=20;fontColor=#000000;" edge="1" parent="1" source="2" target="5">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="&lt;h1&gt;&lt;font color=&quot;#000000&quot;&gt;AI Tree Benifit System&lt;/font&gt;&lt;/h1&gt;&lt;p&gt;&lt;font style=&quot;font-size: 14px;&quot; color=&quot;#000000&quot;&gt;基于与Alex的多次Meeting, 我们发现了WindHorse当前面临的三大痛点&lt;/font&gt;&lt;/p&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+                    <mxGeometry x="57" y="313" width="275" height="94" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" style="edgeStyle=elbowEdgeStyle;html=1;strokeColor=#000000;fontSize=20;fontColor=#CC0000;" edge="1" parent="1" source="3" target="8">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" style="edgeStyle=elbowEdgeStyle;html=1;strokeColor=#000000;fontSize=20;fontColor=#CC0000;" edge="1" parent="1" source="3" target="9">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="&lt;b&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;产品定位&lt;/font&gt;&lt;/b&gt;" style="whiteSpace=wrap;html=1;fontSize=14;fontColor=#000000;fillColor=#FFFFFF;strokeColor=#000000;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="459" y="225" width="115" height="43" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" style="edgeStyle=elbowEdgeStyle;html=1;strokeColor=#000000;fontSize=20;fontColor=#CC0000;" edge="1" parent="1" source="4" target="11">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" style="edgeStyle=elbowEdgeStyle;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#CC0000;" edge="1" parent="1" source="4" target="12">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="&lt;b&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;销售与推广&lt;/font&gt;&lt;/b&gt;" style="whiteSpace=wrap;html=1;fontSize=14;fontColor=#000000;fillColor=#FFFFFF;strokeColor=#000000;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="459" y="339.5" width="113" height="41" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" style="edgeStyle=elbowEdgeStyle;html=1;strokeColor=#000000;fontSize=20;fontColor=#CC0000;" edge="1" parent="1" source="5" target="13">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" style="edgeStyle=elbowEdgeStyle;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#CC0000;" edge="1" parent="1" source="5" target="14">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" style="edgeStyle=elbowEdgeStyle;html=1;strokeColor=#000000;fontSize=20;fontColor=#CC0000;" edge="1" parent="1" source="5" target="15">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="&lt;div style=&quot;&quot;&gt;&lt;b style=&quot;font-size: 20px; background-color: initial;&quot;&gt;市场预测&lt;/b&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;fontSize=14;fontColor=#000000;fillColor=#FFFFFF;strokeColor=#000000;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="461" y="457" width="113" height="42" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="&lt;span style=&quot;font-size: 14px; text-align: left;&quot;&gt;&lt;u&gt;&lt;b&gt;&lt;font color=&quot;#66b2ff&quot;&gt;1.产品特征分析（基于价格或者品牌）&lt;/font&gt;&lt;/b&gt;&lt;/u&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="642" y="195" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="&lt;span style=&quot;font-size: 14px; text-align: left;&quot;&gt;&lt;font color=&quot;#66b2ff&quot;&gt;&lt;strike style=&quot;&quot;&gt;2.人群定位与画像 （性别，喜好，收入级别，社交圈）&lt;/strike&gt;&lt;/font&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="647" y="248" width="359" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="&lt;span style=&quot;font-size: 14px; text-align: left;&quot;&gt;&lt;font color=&quot;#ff8000&quot;&gt;&lt;strike style=&quot;&quot;&gt;1.广告投放渠道与销量之间之间的关系&lt;/strike&gt;&lt;/font&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="642" y="321" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;font color=&quot;#ff8000&quot;&gt;&lt;strike style=&quot;&quot;&gt;2.投放时间&lt;/strike&gt;&lt;/font&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="658" y="369" width="199" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;font color=&quot;#ff6666&quot;&gt;&lt;strike style=&quot;&quot;&gt;1.地区购买潜力预测&lt;/strike&gt;&lt;/font&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="658" y="419" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;font color=&quot;#ff6666&quot;&gt;&lt;strike style=&quot;&quot;&gt;2.人群购买潜力预测&lt;/strike&gt;&lt;/font&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="658" y="463" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;font color=&quot;#ff6666&quot;&gt;&lt;strike style=&quot;&quot;&gt;3.市场销量预测&lt;/strike&gt;&lt;/font&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+                    <mxGeometry x="658" y="507" width="128" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="42" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="26" target="39">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="26" target="37">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="26" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;&lt;span&gt;&lt;font&gt;1.产品特征分析（基于价格或者品牌）&lt;/font&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#66B2FF;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="136" y="638" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="43" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="27" target="38">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="27" target="37">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="46" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;startArrow=classic;startFill=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="27" target="36">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="411" y="710" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="47" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;startArrow=classic;startFill=1;endArrow=classic;endFill=1;" edge="1" parent="1" target="35">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="405" y="704" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="27" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;2.人群定位与画像 （性别，喜好，收入级别，社交圈）&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#66B2FF;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="62" y="689" width="342" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="54" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;startArrow=classic;startFill=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="35" target="50">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="55" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;startArrow=classic;startFill=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="35" target="49">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="56" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;startArrow=classic;startFill=1;endArrow=classic;endFill=1;" edge="1" parent="1" target="51">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="834" y="750" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="35" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;1.广告投放渠道与销量之间之间的关系&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#FF8000;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="576" y="735" width="254" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="52" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#000000;fontSize=20;fontColor=#66B2FF;startArrow=classic;startFill=1;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="36" target="50">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="36" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;2.投放时间&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#FF8000;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="578" y="783" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="37" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;1.地区购买潜力预测&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#FF6666;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="578" y="833" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;2.人群购买潜力预测&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#FF6666;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="578" y="877" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="39" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;3.市场销量预测&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#FF6666;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="578" y="921" width="128" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="49" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;1.地区购买潜力预测&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#FF6666;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="975" y="848" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;2.人群购买潜力预测&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#FF6666;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="975" y="892" width="268" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="51" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span&gt;3.市场销量预测&lt;/span&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontColor=#FF6666;fontStyle=0" vertex="1" parent="1">
+                    <mxGeometry x="975" y="936" width="128" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
