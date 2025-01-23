@@ -1,6 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 from shapely.ops import unary_union, polygonize
+from tidyzoning import find_bldg_type
 
 def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
     """
