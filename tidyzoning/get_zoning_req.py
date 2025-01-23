@@ -222,7 +222,7 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         if warnings > 0:
             print(f"Completed with {warnings} warnings.")
 
-        # 转换结果为 DataFrame
+        # transfer final result into DataFrame
         return pd.DataFrame(results)
 
     processed_constraints = process_zoning_constraints(result, tidybuilding)
