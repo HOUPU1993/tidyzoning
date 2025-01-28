@@ -180,7 +180,7 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                                 elif select == 'max':
                                     return max(evaluated_expressions)
                                 elif select is None:
-                                    return evaluated_expressions  # 默认返回所有表达式的值
+                                    return evaluated_expressions 
                         except Exception as e:
                             warnings += 1
                             print(f"Warning: Failed to evaluate expressions: {expression or expressions_list}. Error: {e}")
