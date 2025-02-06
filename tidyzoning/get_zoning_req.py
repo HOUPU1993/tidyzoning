@@ -121,7 +121,7 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
     result = zoning_extract(tidybuilding, tidyzoning, tidyparcel)
     
     if result["district_constraints"] is None or result["district_constraints"].empty:
-        return pd.DataFrame(columns=["constraint_type", "spec_type", "min_value", "max_value", "unit"])  # return empty DataFrame
+        return pd.DataFrame()  # return empty DataFrame
     result["district_constraints"]["min_val"] = result["district_constraints"]["min_val"].apply(extract_expression)
     result["district_constraints"]["max_val"] = result["district_constraints"]["max_val"].apply(extract_expression)
 
