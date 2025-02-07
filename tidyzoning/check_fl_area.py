@@ -5,6 +5,31 @@ import geopandas as gpd
 from tidyzoning import get_zoning_req
 
 def check_fl_area(tidybuilding, tidyzoning):
+    """
+    Checks whether the floor area of a given building complies with zoning constraints.
+
+    Parameters:
+    ----------
+    tidybuilding : GeoDataFrame
+        A GeoDataFrame containing information about a single building. 
+        It must have at least one of the following:
+        - 'floor_area' column: Directly specifying the building's floor area.
+        - 'total_floors' column and 'geometry': If 'floor_area' is missing, 
+          the total floor area is estimated by multiplying the footprint area 
+          (from 'geometry') by the number of floors.
+
+    tidyzoning : GeoDataFrame
+        A GeoDataFrame containing zoning constraints. It may have multiple rows,
+        each representing a different zoning rule that applies to the given building.
+    
+    Returns:
+    -------
+    DataFrame
+        A DataFrame with two columns:
+        - 'zoning_id': The index of the corresponding row from `tidyzoning`.
+        - 'allowed': A boolean value indicating whether the building's floor area 
+          complies with the zoning regulations (True if compliant, False otherwise).
+    """
     ureg = UnitRegistry()
     results = []
 

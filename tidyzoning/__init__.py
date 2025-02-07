@@ -4,3 +4,4 @@ from .check_function import check_land_use
 from .get_zoning_req import get_zoning_req
 from .check_footprint import check_footprint
 from .check_fl_area import check_fl_area
+from .check_far import check_far
