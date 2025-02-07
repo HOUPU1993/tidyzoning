@@ -1,6 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 from shapely.ops import unary_union, polygonize
+import random
 from tidyzoning import find_bldg_type
 
 def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
@@ -12,7 +13,6 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
     :param tidyparcel: Parcel data (GeoDataFrame), optional
     :return: DataFrame containing all calculated results
     """
-    # extract info from the district constraints
     def zoning_extract(tidybuilding, tidyzoning, tidyparcel=None):
         columns_to_extract = ['structure_constraints', 'other_constraints', 'lot_constraints']
         extracted_data = []
@@ -20,49 +20,42 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         for col in columns_to_extract:
             for index, row in tidyzoning.iterrows():
                 constraints = row[col]
-                if isinstance(constraints, dict): # if the constraints are dictionaries
+                if isinstance(constraints, dict):  
                     for constraint_type, entries in constraints.items():
-                        if isinstance(entries, list):  # Iterate over the list of keys and values
+                        if isinstance(entries, list):  
                             for entry in entries:
                                 flattened_entry = {
                                     "original_index": index,
                                     "source_column": col,
                                     "constraint_type": constraint_type,
                                 }
-                                for key, value in entry.items(): # Save all key-value pairs in the entry
+                                for key, value in entry.items():  
                                     flattened_entry[key] = value
-                                extracted_data.append(flattened_entry) # Add results to the list
-        # transfer district info into the dataframe
+                                extracted_data.append(flattened_entry)
         district_constraints = pd.DataFrame(extracted_data)
 
-        if tidyparcel is None: # check whether tidyparcel exist or not
-            lot_width, lot_depth, lot_area = None, None, None
-        else:
+        # If no parcel data is provided
+        lot_width, lot_depth, lot_area = None, None, None
+        if tidyparcel is not None:
             results = []
             for prop_id, group in tidyparcel.groupby('Prop_ID'):
                 front_of_parcel = group[group['side'] == "front"]
                 side_of_parcel = group[group['side'] == "Interior side"]
                 parcel_without_centroid = group[(group['side'].notna()) & (group['side'] != "centroid")]
-                # calculate the width and depth
+
                 lot_width = front_of_parcel.geometry.length.sum() * 3.28084
                 lot_depth = side_of_parcel.geometry.length.sum() * 3.28084
-                # calculate the area for each parcel
                 polygons = polygonize(unary_union(parcel_without_centroid.geometry))
                 lot_polygon = unary_union(polygons)
                 lot_area = lot_polygon.area * 10.7639
-                results.append({
-                    "Prop_ID": prop_id,
-                    "lot_width": lot_width,
-                    "lot_depth": lot_depth,
-                    "lot_area": lot_area
-                })
-            # transfer parcel info into dataframe
+                results.append({"Prop_ID": prop_id, "lot_width": lot_width, "lot_depth": lot_depth, "lot_area": lot_area})
+
             parcel_results = pd.DataFrame(results)
             lot_width = parcel_results["lot_width"].iloc[0] if not parcel_results.empty else None
             lot_depth = parcel_results["lot_depth"].iloc[0] if not parcel_results.empty else None
             lot_area = parcel_results["lot_area"].iloc[0] if not parcel_results.empty else None
 
-        # check the data from the tidybuilding
+        # Check the data from the tidybuilding
         bed_list = {
             'units_0bed': 0,
             'units_1bed': 1,
@@ -87,15 +80,14 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         max_unit_size = tidybuilding.get('max_unit_size', [None])[0]
         far = fl_area / lot_area if lot_area is not None else None
 
-        # summarize the resul
         return {
-            # from tidyzoning
+            # From tidyzoning
             "district_constraints": district_constraints, 
-            # from tidyparcel
+            # From tidyparcel
             "lot_width": lot_width, 
             "lot_depth": lot_depth,
             "lot_area": lot_area,
-            # from tidybuilding
+            # From tidybuilding
             "bedrooms": bedrooms, 
             "units_0bed": units_0bed,
             "units_1bed": units_1bed,
@@ -111,109 +103,78 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
             "floors": floors,
             "min_unit_size": min_unit_size,
             "max_unit_size": max_unit_size,
-            # combined tidy zoning and tidyparcel together
+            # Combined tidy zoning and tidyparcel together
             "far": far   
         }
 
-    def extract_expression(value):
-        return value.get("expression") if isinstance(value, dict) and "expression" in value else value
+    def evaluate_conditions_and_expressions(rules, context):
+        # If rules is a dict, like {'expression': '30'}
+        if isinstance(rules, dict) and "expression" in rules:  
+            try:
+                return eval(str(rules["expression"]), {}, context)
+            except Exception as e:
+                return None
+        # If rules is a list, like [{'conditions': ['bedrooms== 0'], 'expression': 500}, {'conditions': ['bedrooms == 1'], 'expression': 700}]
+        if not isinstance(rules, list):  
+            return None
+        all_results = []
+        for rule in rules:
+            conditions = rule.get("conditions", [])  # List: [{condition_1, expression_1},{condition_2, expression_2}]
+            expression = rule.get("expression", None)  # Single string: {'expression': '30'}
+            expressions_list = rule.get("expressions", [])  # List: [{'expression_1': '10'}.{'expression_2': '20'}.select:"min"]
+            logical_operator = rule.get("logical_operator", None)  # Single string: [And/Or]
+            select = rule.get("select", None)  # List: [min, max, unique, either]
+            try:
+                '''If logical_operator exists, calculate conditions_met according to AND / OR logic.
+                   If conditions exist but logical_operator does not, still calculate conditions_met.
+                   If conditions are empty, default conditions_met = True (for expressions_list).'''
+                if conditions:
+                    if logical_operator == "AND":
+                        conditions_met = all(eval(cond, {}, context) for cond in conditions)
+                    elif logical_operator == "OR":
+                        conditions_met = any(eval(cond, {}, context) for cond in conditions)
+                    else:
+                        conditions_met = all(eval(cond, {}, context) for cond in conditions)  # No `logical_operator`, default `AND`
+                else:
+                    conditions_met = True  # If no `conditions`, default to allow execution (for `expressions_list`)
 
-    result = zoning_extract(tidybuilding, tidyzoning, tidyparcel)
-    
-    if result["district_constraints"] is None or result["district_constraints"].empty:
-        return pd.DataFrame()  # return empty DataFrame
-    result["district_constraints"]["min_val"] = result["district_constraints"]["min_val"].apply(extract_expression)
-    result["district_constraints"]["max_val"] = result["district_constraints"]["max_val"].apply(extract_expression)
+                # Handle single `expression`
+                if conditions_met and expression:
+                    result = eval(str(expression), {}, context)
+                    all_results.append(result)
 
-    # process zoning constraints base on the type of building
+                # Handle `expressions_list` (can execute even without `conditions`)
+                if expressions_list:
+                    temp_results = [eval(str(expr), {}, context) for expr in expressions_list]
+
+                    # Handle select logic
+                    if select == "max":
+                        all_results.append(max(temp_results))
+                    elif select == "min":
+                        all_results.append(min(temp_results))
+                    elif select == "unique":
+                        all_results.append(list(set(temp_results)))  # Remove duplicates
+                    elif select == "either":
+                        all_results.append(random.choice(temp_results))  # Random choice
+                    else:
+                        all_results.extend(temp_results)  # Default to store all results
+            except Exception as e:
+                continue
+        # Unified return value
+        return all_results[0] if len(all_results) == 1 else (all_results if all_results else None)
+
     def process_zoning_constraints(result, tidybuilding):
-        # extract the info from constraints
         district_constraints = result["district_constraints"]
         bldg_type = find_bldg_type(tidybuilding)
-        # Initialize results list and warning count
         results = []
-        warnings = 0
-
-        # Iterate through each constraint
+        context = {**result}  # Get all calculated results
         for _, constraint in district_constraints.iterrows():
-            use_name = constraint["use_name"]
+            if bldg_type not in constraint["use_name"]:
+                continue
             min_val_expression = constraint["min_val"]
             max_val_expression = constraint["max_val"]
-            constraint_min_val = None
-            constraint_max_val = None
-
-            # check the bldg type
-            if bldg_type not in use_name:
-                # print(f"Skipping constraint '{constraint['constraint_type']}': because building type '{bldg_type}' does not match use name '{use_name}'.")
-                continue
-
-            def evaluate_conditions_and_expressions(rules, context):
-                warnings = 0
-
-                for rule in rules:
-                    logical_operator = rule.get('logical_operator').upper()
-                    conditions = rule.get('conditions', [])
-                    expression = rule.get('expression', None) # get the simple expression
-                    expressions_list = rule.get('expression', [])  # get the list of expression
-                    select = rule.get('select', None)
-
-                    # Parse conditions
-                    try:
-                        if logical_operator == 'AND':
-                            conditions_value = all(eval(cond, {}, context) for cond in conditions)
-                        elif logical_operator == 'OR':
-                            conditions_value = any(eval(cond, {}, context) for cond in conditions)
-                        else:
-                            conditions_value = False
-                    except Exception as e:
-                        warnings += 1
-                        print(f"Warning: Failed to evaluate conditions: {conditions}. Error: {e}")
-                        continue
-
-                    if conditions_value:
-                        try:
-                            # If it's a single expression
-                            if expression:
-                                return eval(expression, {}, context)
-                            # If it's multiple expressions, handle with select
-                            if expressions_list:
-                                evaluated_expressions = [eval(expr, {}, context) for expr in expressions_list]
-                                if select == 'min':
-                                    return min(evaluated_expressions)
-                                elif select == 'max':
-                                    return max(evaluated_expressions)
-                                elif select is None:
-                                    return evaluated_expressions 
-                        except Exception as e:
-                            warnings += 1
-                            print(f"Warning: Failed to evaluate expressions: {expression or expressions_list}. Error: {e}")
-                            continue
-
-                return None  # If no rule satisfies the condition, return None
-
-            # Use the complete context (all key-value pairs in result)
-            context = {**result}
-            # print(f"Context before evaluation: {context}")
-
-            # deal with min_val
-            if isinstance(min_val_expression, str): # If it's specifc value
-                try:
-                    constraint_min_val = eval(min_val_expression, {}, context)
-                except Exception as e:
-                    warnings += 1
-            elif isinstance(min_val_expression, list):  # If it's a complex rule
-                constraint_min_val = evaluate_conditions_and_expressions(min_val_expression, context)
-
-            # deal with max_val
-            if isinstance(max_val_expression, str): # If it's specifc value
-                try:
-                    constraint_max_val = eval(max_val_expression, {}, context)
-                except Exception as e:
-                    warnings += 1
-            elif isinstance(max_val_expression, list): # If it's a complex rule
-                constraint_max_val = evaluate_conditions_and_expressions(max_val_expression, context)
-
-            # saving results
+            constraint_min_val = evaluate_conditions_and_expressions(min_val_expression, context)
+            constraint_max_val = evaluate_conditions_and_expressions(max_val_expression, context)
             results.append({
                 "constraint_type": constraint["source_column"],
                 "spec_type": constraint["constraint_type"],
@@ -221,13 +182,8 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                 "max_value": constraint_max_val,
                 "unit": constraint["unit"]
             })
-
-        # print warnings
-        if warnings > 0:
-            print(f"Completed with {warnings} warnings.")
-
-        # transfer final result into DataFrame
         return pd.DataFrame(results)
 
+    result = zoning_extract(tidybuilding, tidyzoning, tidyparcel)
     processed_constraints = process_zoning_constraints(result, tidybuilding)
     return processed_constraints
