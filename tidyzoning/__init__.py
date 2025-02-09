@@ -9,3 +9,5 @@ from .check_height import check_height
 from .check_bedrooms import check_bedrooms
 from .check_lot_coverage import check_lot_coverage
 from .check_unit_density import check_unit_density
+from .check_unit_size import check_unit_size
+
