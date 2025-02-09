@@ -7,3 +7,4 @@ from .check_fl_area import check_fl_area
 from .check_far import check_far
 from .check_height import check_height
 from .check_bedrooms import check_bedrooms
+from .check_lot_coverage import check_lot_coverage
