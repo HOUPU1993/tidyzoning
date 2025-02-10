@@ -93,11 +93,11 @@ def check_footprint(tidyparcel_gdf, tidybuilding):
             fit_results = rot_fit(parcel_geom, building_dims)
             parcel_results.append(fit_results[0])  # Store whether the building fits
 
-        results.append([parcel['parcel_id'], *parcel_results])
+        results.append([parcel['Prop_ID'], *parcel_results])
 
     # Convert the results to a DataFrame
     first_column_name = tidybuilding.columns[0]
-    result_columns = ['parcel_id'] + [
+    result_columns = ['Prop_ID'] + [
         f"{int(building[first_column_name])}_{first_column_name}" for _, building in tidybuilding.iterrows()
     ]
 
