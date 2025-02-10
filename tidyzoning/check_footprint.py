@@ -83,7 +83,7 @@ def check_footprint(tidyparcel_gdf, tidybuilding):
     results = []
 
     for _, parcel in tqdm(tidyparcel_gdf.iterrows(), total=len(tidyparcel_gdf), desc="Processing Parcels"):
-        parcel_geom = parcel['geometry']
+        parcel_geom = parcel['buildable_geometry']
         if parcel_geom is None or shapely.geometry.shape(parcel_geom).is_empty:
             continue  # Skip empty parcels
 
