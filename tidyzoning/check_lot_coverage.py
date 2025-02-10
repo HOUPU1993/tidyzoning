@@ -5,9 +5,9 @@ import geopandas as gpd
 from shapely.ops import unary_union, polygonize
 from tidyzoning import get_zoning_req
 
-def check_lot_coverage(tidybuilding, tidyparcel, tidyzoning):
+def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
     """
-    Checks whether the Floor Area Ratio (FAR) of a given building complies with zoning constraints.
+    Checks whether the lot_coverage of a given building complies with zoning constraints.
 
     Parameters:
     ----------
@@ -21,7 +21,7 @@ def check_lot_coverage(tidybuilding, tidyparcel, tidyzoning):
         A DataFrame with the following columns:
         - 'Prop_ID': Identifier for the property (from `tidyparcel`).
         - 'zoning_id': The index of the corresponding row from `tidyzoning`.
-        - 'allowed': A boolean value indicating whether the building's FAR 
+        - 'allowed': A boolean value indicating whether the building's lot coverage 
     """
     ureg = UnitRegistry()
     results = []

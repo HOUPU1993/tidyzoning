@@ -5,7 +5,7 @@ import geopandas as gpd
 from shapely.ops import unary_union, polygonize
 from tidyzoning import get_zoning_req
 
-def check_far(tidybuilding, tidyparcel, tidyzoning):
+def check_far(tidybuilding, tidyzoning, tidyparcel):
     """
     Checks whether the Floor Area Ratio (FAR) of a given building complies with zoning constraints.
 
