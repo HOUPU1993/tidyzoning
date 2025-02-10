@@ -25,7 +25,7 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel):
     tidyparcel = tidyparcel[(tidyparcel['side'].notna()) & (tidyparcel['side'] != 'centroid')].copy()
     # Initialize columns for setbacks and units
     tidyparcel['setback'] = None
-    tidyparcel['units'] = None
+    tidyparcel['unit'] = None
 
     
     # mapping the side classification name
