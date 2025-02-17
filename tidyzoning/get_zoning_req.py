@@ -171,10 +171,10 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         for _, constraint in district_constraints.iterrows():
             if bldg_type not in constraint["use_name"]:
                 continue
-            min_val_expression = constraint["min_val"]
-            max_val_expression = constraint["max_val"]
-            constraint_min_val = evaluate_conditions_and_expressions(min_val_expression, context)
-            constraint_max_val = evaluate_conditions_and_expressions(max_val_expression, context)
+            min_val_expression = constraint["min_val", None]
+            max_val_expression = constraint["max_val", None]
+            constraint_min_val = evaluate_conditions_and_expressions(min_val_expression, context) if min_val_expression else None
+            constraint_max_val = evaluate_conditions_and_expressions(max_val_expression, context) if min_val_expression else None
             results.append({
                 "constraint_type": constraint["source_column"],
                 "spec_type": constraint["constraint_type"],
