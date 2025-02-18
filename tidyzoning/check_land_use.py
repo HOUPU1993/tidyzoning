@@ -28,11 +28,20 @@ def check_land_use(tidybuilding, tidyzoning):
 
     # Compute the building type
     bldg_type = find_bldg_type(tidybuilding)
-    # Apply the check function to the dist_info column
-    tidyzoning["allowed"] = tidyzoning["dist_info"].apply(lambda x: check_land_use_single(x, bldg_type))
+    # # Apply the check function to the dist_info column
+    # tidyzoning["allowed"] = tidyzoning["dist_info"].apply(lambda x: check_land_use_single(x, bldg_type))
     
-    # Create a new DataFrame with 'zoning_id' and 'allowed' columns
-    results_df = tidyzoning[["allowed"]].reset_index()
+    # # Create a new DataFrame with 'zoning_id' and 'allowed' columns
+    # results_df = tidyzoning[["allowed"]].reset_index()
+    # results_df.rename(columns={"index": "zoning_id"}, inplace=True)
+    
+    # return results_df
+
+    # Compute the allowed column without modifying tidyzoning
+    results_df = tidyzoning.assign(
+        allowed=tidyzoning["dist_info"].apply(lambda x: check_land_use_single(x, bldg_type))
+    )[['allowed']].reset_index()
+
     results_df.rename(columns={"index": "zoning_id"}, inplace=True)
     
     return results_df
