@@ -64,7 +64,7 @@ def check_height(tidybuilding, tidyzoning):
 
             if isinstance(max_height, list):
                 max_height = np.array(max_height, dtype=float) 
-                max_height = 1000000 if np.isnan(max_height).all() else np.nanmax(max_height)  
+                max_height = 1000000 if np.isnan(max_height).all() else np.nanmin(max_height)  
             else:
                 max_height = 1000000 if pd.isna(max_height) else max_height 
 
