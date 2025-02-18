@@ -13,3 +13,4 @@ from .check_unit_size import check_unit_size
 from .add_setbacks import add_setbacks
 from .get_buildable_area import get_buildable_area
 from .process_zoning_analysis import process_zoning_analysis
+from .unify_tidybuilding import unify_tidybuilding
