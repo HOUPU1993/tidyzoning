@@ -53,8 +53,8 @@ def check_height(tidybuilding, tidyzoning):
             min_height = height_row['min_value'].values[0]  # Extract value
             max_height = height_row['max_value'].values[0]  # Extract value
             # Handle NaN values
-            min_height = 0 if pd.isna(min_height) else min_height  # Set a very small value if no value
-            max_height = 1000000 if pd.isna(max_height) else max_height  # Set a very large value if no value
+            min_height = 0 if pd.isna(min_height) else min(min_height)  # Set a very small value if no value
+            max_height = 1000000 if pd.isna(max_height) else max(max_height)  # Set a very large value if no value
             
             # Get the unit and convert
             unit_column = height_row['unit'].values[0]  # Extract the unit of the specific row
