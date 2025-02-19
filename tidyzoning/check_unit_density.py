@@ -7,7 +7,7 @@ from tidyzoning import get_zoning_req
 
 def check_unit_density(tidybuilding, tidyzoning):
     """
-    Checks whether the Floor Area Ratio (FAR) of a given building complies with zoning constraints.
+    Checks whether the unit_density of a given building complies with zoning constraints.
 
     Parameters:
     ----------
@@ -23,20 +23,13 @@ def check_unit_density(tidybuilding, tidyzoning):
     """
     results = []
     # Check the data from the tidybuilding
-    bed_list = {
-        'units_0bed': 0,
-        'units_1bed': 1,
-        'units_2bed': 2,
-        'units_3bed': 3,
-        'units_4bed': 4
-    }
     units_0bed = tidybuilding['units_0bed'].sum() if 'units_0bed' in tidybuilding.columns else 0
     units_1bed = tidybuilding['units_1bed'].sum() if 'units_1bed' in tidybuilding.columns else 0
     units_2bed = tidybuilding['units_2bed'].sum() if 'units_2bed' in tidybuilding.columns else 0
     units_3bed = tidybuilding['units_3bed'].sum() if 'units_3bed' in tidybuilding.columns else 0
     units_4bed = tidybuilding['units_4bed'].sum() if 'units_4bed' in tidybuilding.columns else 0
     total_units = units_0bed + units_1bed + units_2bed + units_3bed + units_4bed
-    acres = tidybuilding.geometry.area.iloc[0] / 4046.86 # transfer m2 into acres
+    acres = tidybuilding['fl_area_bottom'].iloc[0] / 43560 # transfer ft2 into acres
     unit_density = total_units / acres #units per acre
 
     # Iterate through each row in tidyzoning

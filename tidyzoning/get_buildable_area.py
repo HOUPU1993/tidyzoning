@@ -16,22 +16,22 @@ def get_buildable_area(tidyparcel_with_setbacks):
     Returns:
     -------
     GeoDataFrame
-        A GeoDataFrame with each Prop_ID and its corresponding buildable geometry after applying setbacks.
+        A GeoDataFrame with each parcel_id and its corresponding buildable geometry after applying setbacks.
     """
     # Initialize unit registry for unit conversion
     ureg = UnitRegistry()
     # Used to store the final results
     buildable_results = []
     
-    # Iterate through each Prop_ID
-    for prop_id, group in tidyparcel_with_setbacks.groupby("Prop_ID"):
+    # Iterate through each parcel_id
+    for parcel_id, group in tidyparcel_with_setbacks.groupby("parcel_id"):
         group = group.copy()
         polygons = list(polygonize(group.geometry))
         parcel_geometry = unary_union(polygons)
 
         # If no setback values exist, return the polygonized geometry
         if group['setback'].isna().all():
-            buildable_results.append({'Prop_ID': prop_id, 'buildable_geometry': parcel_geometry})
+            buildable_results.append({'parcel_id': parcel_id, 'buildable_geometry': parcel_geometry})
             continue
 
         # Convert setback units to meters
@@ -62,7 +62,7 @@ def get_buildable_area(tidyparcel_with_setbacks):
         elif buildable_geom.geom_type == 'MultiPolygon':
             buildable_geom = max(buildable_geom.geoms, key=lambda g: g.area)  
 
-        buildable_results.append({'Prop_ID': prop_id, 'buildable_geometry': buildable_geom})
+        buildable_results.append({'parcel_id': parcel_id, 'buildable_geometry': buildable_geom})
 
     # transfer into geodataframe
     buildable_gdf = gpd.GeoDataFrame(buildable_results, geometry='buildable_geometry', crs='EPSG:3857').dropna(subset=['buildable_geometry'])

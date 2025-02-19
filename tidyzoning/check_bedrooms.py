@@ -5,7 +5,7 @@ from tidyzoning import get_zoning_req
 
 def check_bedrooms(tidybuilding, tidyzoning):
     """
-    Checks whether the Floor Area Ratio (FAR) of a given building complies with zoning constraints.
+    Checks whether the bedrooms of a given building complies with zoning constraints.
 
     Parameters:
     ----------

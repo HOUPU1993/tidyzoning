@@ -6,18 +6,12 @@ from tidyzoning import get_zoning_req
 
 def check_unit_size(tidybuilding, tidyzoning):
     """
-    Checks whether the floor area of a given building complies with zoning constraints.
+    Checks whether the unit size of a given building complies with zoning constraints.
 
     Parameters:
     ----------
     tidybuilding : GeoDataFrame
         A GeoDataFrame containing information about a single building. 
-        It must have at least one of the following:
-        - 'floor_area' column: Directly specifying the building's floor area.
-        - 'total_floors' column and 'geometry': If 'floor_area' is missing, 
-          the total floor area is estimated by multiplying the footprint area 
-          (from 'geometry') by the number of floors.
-
     tidyzoning : GeoDataFrame
         A GeoDataFrame containing zoning constraints. It may have multiple rows,
         each representing a different zoning rule that applies to the given building.

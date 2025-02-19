@@ -7,7 +7,7 @@ from tidyzoning import get_zoning_req
 
 def check_height(tidybuilding, tidyzoning):
     """
-    Checks whether the Floor Area Ratio (FAR) of a given building complies with zoning constraints.
+    Checks whether the building height of a given building complies with zoning constraints.
 
     Parameters:
     ----------
@@ -18,18 +18,17 @@ def check_height(tidybuilding, tidyzoning):
     -------
     DataFrame
         A DataFrame with the following columns:
-        - 'Prop_ID': Identifier for the property (from `tidyparcel`).
         - 'zoning_id': The index of the corresponding row from `tidyzoning`.
-        - 'allowed': A boolean value indicating whether the building's FAR 
+        - 'allowed': A boolean value indicating whether the building's Height
     """
     ureg = UnitRegistry()
     results = []
 
     # Calculate the floor area of the building
-    if len(tidybuilding['building_height']) == 1:
-        height = tidybuilding['building_height'].iloc[0] * ureg('ft')
-    elif len(tidybuilding['total_floors']) == 1:
-        floors = tidybuilding['total_floors'].iloc[0]
+    if len(tidybuilding['height']) == 1:
+        height = tidybuilding['height'].iloc[0] * ureg('ft')
+    elif len(tidybuilding['stories']) == 1:
+        floors = tidybuilding['stories'].iloc[0]
         height = 12 * floors * ureg('ft') # height was recorded as feet
     else:
         print("Warning: No tidybuilding height recorded")

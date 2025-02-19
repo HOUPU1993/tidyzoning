@@ -73,9 +73,9 @@ def process_zoning_analysis(tidybuilding, tidyzoning, tidyparcel):
     def compute_factors(tidybuilding, tidyzoning_filtered, tidyparcel_filtered, check_func):
         all_results = []
         for _, row in find_district_idx_results.iterrows():
-            prop_id = row['prop_id']
+            parcel_id = row['parcel_id']
             zoning_idx = row['zoning_id']
-            filtered_tidyparcel = tidyparcel_filtered[tidyparcel_filtered['Prop_ID'] == prop_id]
+            filtered_tidyparcel = tidyparcel_filtered[tidyparcel_filtered['parcel_id'] == parcel_id]
             filtered_tidyzoning = tidyzoning.iloc[[zoning_idx]]
             results = check_func(tidybuilding, filtered_tidyzoning, filtered_tidyparcel)
             all_results.append(results)
@@ -93,7 +93,7 @@ def process_zoning_analysis(tidybuilding, tidyzoning, tidyparcel):
     check_merge_far_lot_coverage = check_merge_far_lot_coverage[final_results_lot_coverage.columns]
 
     # 7. Update tidyparcel_filtered
-    tidyparcel_filtered = tidyparcel_filtered.merge(check_merge_far_lot_coverage[['Prop_ID', 'allowed']], on='Prop_ID', how='left')
+    tidyparcel_filtered = tidyparcel_filtered.merge(check_merge_far_lot_coverage[['parcel_id', 'allowed']], on='parcel_id', how='left')
     tidyparcel_filtered = tidyparcel_filtered[tidyparcel_filtered['allowed'] == True]
     tidyparcel_filtered = tidyparcel_filtered.drop_duplicates(subset=['geometry'], keep='first')
 
@@ -111,8 +111,8 @@ def process_zoning_analysis(tidybuilding, tidyzoning, tidyparcel):
 
     '''Print analysis results'''
     total_parcels = len(tidyparcel['parcel_id'].unique())
-    total_allowed_parcels = len(check_footprint_results['Prop_ID'].unique())
-    total_fitted_parcels = (check_footprint_results.loc[:, check_footprint_results.columns != 'Prop_ID'] == True).sum().sum()
+    total_allowed_parcels = len(check_footprint_results['parcel_id'].unique())
+    total_fitted_parcels = (check_footprint_results.loc[:, check_footprint_results.columns != 'parcel_id'] == True).sum().sum()
     percent_fitted_in_allowed = total_fitted_parcels / total_allowed_parcels if total_allowed_parcels > 0 else 0
     percent_fitted_in_total = total_fitted_parcels / total_parcels if total_parcels > 0 else 0
 

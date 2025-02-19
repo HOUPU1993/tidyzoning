@@ -11,11 +11,9 @@ def find_district_idx(tidyparcel, tidyzoning):
     tidyzoning (GeoDataFrame): A GeoDataFrame representing zoning districts with geometries.
 
     Returns:
-    list of tuples: A list of tuples where each tuple contains:
                     Prop_ID and Pacel_id are from Tidyparcel
                     tidyzoning_index are from Tidyzoning
-                    (Prop_ID, parcel_id, tidyzoning_index) if a match is found,
-                    or (Prop_ID, parcel_id, None) if no match is found.
+                    (Prop_ID, parcel_id, tidyzoning_index) if a match is found, or (Prop_ID, parcel_id, None) if no match is found.
     """
     # Filter rows with centroids
     centroid_rows = tidyparcel[tidyparcel['side'] == 'centroid']
@@ -29,7 +27,7 @@ def find_district_idx(tidyparcel, tidyzoning):
     # Create the DataFrame directly with required columns
     results_df = pd.DataFrame({
         "prop_id": joined["Prop_ID"],
-        "object_id": joined["parcel_id"],
+        "parcel_id": joined["parcel_id"],
         "zoning_id": joined["index_right"]
     })
 

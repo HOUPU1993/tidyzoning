@@ -36,9 +36,6 @@ def check_fl_area(tidybuilding, tidyzoning):
     # Calculate the floor area of the building
     if len(tidybuilding['fl_area']) == 1:
         fl_area = tidybuilding['fl_area'].iloc[0] * ureg('ft^2')
-    elif len(tidybuilding['total_floors']) == 1:
-        floors = tidybuilding['total_floors'].iloc[0]
-        fl_area = tidybuilding.geometry.area.iloc[0] * floors * ureg('ft^2')
     else:
         print("Warning: No floor area found in tidybuilding")
         return pd.DataFrame(columns=['zoning_id', 'allowed'])  # Return an empty DataFrame

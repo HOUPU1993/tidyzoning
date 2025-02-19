@@ -7,7 +7,7 @@ from tidyzoning import get_zoning_req
 
 def add_setbacks(tidybuilding, tidyzoning, tidyparcel):
     """
-    Checks whether the Floor Area Ratio (FAR) of a given building complies with zoning constraints.
+    Add setbacks to each tidyparcel based on tidyzoning requirement.
 
     Parameters:
     ----------
@@ -36,8 +36,8 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel):
         'rear': 'setback_rear'
     }
     
-    # Calculate FAR for each Prop_ID
-    for prop_id, group in tidyparcel.groupby("Prop_ID"):
+    # Calculate FAR for each parcel_id
+    for parcel_id, group in tidyparcel.groupby("parcel_id"):
         # Iterate through each row in tidyzoning
         for index, zoning_row in tidyzoning.iterrows():
             zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T)  # ✅ Fix the issue of passing Series
