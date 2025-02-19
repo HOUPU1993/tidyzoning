@@ -38,7 +38,7 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         lot_width, lot_depth, lot_area = None, None, None
         if tidyparcel is not None:
             results = []
-            for prop_id, group in tidyparcel.groupby('Prop_ID'):
+            for parcel_id, group in tidyparcel.groupby('parcel_id'):
                 front_of_parcel = group[group['side'] == "front"]
                 side_of_parcel = group[group['side'] == "Interior side"]
                 parcel_without_centroid = group[(group['side'].notna()) & (group['side'] != "centroid")]
@@ -48,7 +48,7 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                 polygons = polygonize(unary_union(parcel_without_centroid.geometry))
                 lot_polygon = unary_union(polygons)
                 lot_area = lot_polygon.area * 10.7639
-                results.append({"Prop_ID": prop_id, "lot_width": lot_width, "lot_depth": lot_depth, "lot_area": lot_area})
+                results.append({"parcel_id": parcel_id, "lot_width": lot_width, "lot_depth": lot_depth, "lot_area": lot_area})
 
             parcel_results = pd.DataFrame(results)
             lot_width = parcel_results["lot_width"].iloc[0] if not parcel_results.empty else None
@@ -70,14 +70,22 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         units_3bed = tidybuilding['units_3bed'].sum() if 'units_3bed' in tidybuilding.columns else 0
         units_4bed = tidybuilding['units_4bed'].sum() if 'units_4bed' in tidybuilding.columns else 0
         total_units = units_0bed + units_1bed + units_2bed + units_3bed + units_4bed
-        fl_area = tidybuilding.get('floor_area', [None])[0]
-        parking_open = tidybuilding.get('parking_open', [None])[0]
-        parking_enclosed = tidybuilding.get('parking_enclosed', [None])[0]
-        parking = tidybuilding.get('parking', [None])[0]
-        height = tidybuilding.get('building_height', [None])[0]
-        floors = tidybuilding.get('total_floors', [None])[0]
+        fl_area = tidybuilding.get('fl_area', [None])[0]
+        fl_area_top = tidybuilding.get('fl_area_top', [None])[0]
+        fl_area_bottom = tidybuilding.get('fl_area_bottom', [None])[0]
+        height = tidybuilding.get('height', [None])[0]
+        height_eave = tidybuilding.get('height_eave', [None])[0]
+        floors = tidybuilding.get('stories', [None])[0]
         min_unit_size = tidybuilding.get('min_unit_size', [None])[0]
         max_unit_size = tidybuilding.get('max_unit_size', [None])[0]
+        parking_enclosed = tidybuilding.get('parking_enclosed', [None])[0]
+        parking_covered = tidybuilding.get('parking_covered', [None])[0]
+        parking_uncovered = tidybuilding.get('parking_uncovered', [None])[0]
+        parking_floors = tidybuilding.get('parking_floors', [None])[0]
+        garage_entry = tidybuilding.get('garage_entry', [None])[0]
+        units_floor1 = tidybuilding.get('units_floor1', [None])[0]
+        units_floor2 = tidybuilding.get('units_floor2', [None])[0]
+        units_floor3 = tidybuilding.get('units_floor3', [None])[0]
         far = fl_area / lot_area if lot_area is not None else None
 
         return {
@@ -96,13 +104,21 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
             "units_4bed": units_4bed,
             "total_units": total_units,
             "fl_area": fl_area,
-            "parking_open": parking_open,
-            "parking_enclosed": parking_enclosed,
-            "parking": parking,
+            "fl_area_top": fl_area_top,
+            "fl_area_bottom": fl_area_bottom,
             "height": height,
+            "height_eave": height_eave,
             "floors": floors,
             "min_unit_size": min_unit_size,
             "max_unit_size": max_unit_size,
+            "parking_enclosed": parking_enclosed,
+            "parking_covered": parking_covered,
+            "parking_uncovered": parking_uncovered,
+            "parking_floors": parking_floors,
+            "garage_entry": garage_entry,
+            "units_floor1": units_floor1,
+            "units_floor2": units_floor2,
+            "units_floor3": units_floor3,
             # Combined tidy zoning and tidyparcel together
             "far": far   
         }
