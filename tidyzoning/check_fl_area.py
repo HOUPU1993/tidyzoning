@@ -13,8 +13,8 @@ def check_fl_area(tidybuilding, tidyzoning):
     tidybuilding : GeoDataFrame
         A GeoDataFrame containing information about a single building. 
         It must have at least one of the following:
-        - 'floor_area' column: Directly specifying the building's floor area.
-        - 'total_floors' column and 'geometry': If 'floor_area' is missing, 
+        - 'fl_area' column: Directly specifying the building's floor area.
+        - 'total_floors' column and 'geometry': If 'fl_area' is missing, 
           the total floor area is estimated by multiplying the footprint area 
           (from 'geometry') by the number of floors.
 
@@ -34,8 +34,8 @@ def check_fl_area(tidybuilding, tidyzoning):
     results = []
 
     # Calculate the floor area of the building
-    if len(tidybuilding['floor_area']) == 1:
-        fl_area = tidybuilding['floor_area'].iloc[0] * ureg('ft^2')
+    if len(tidybuilding['fl_area']) == 1:
+        fl_area = tidybuilding['fl_area'].iloc[0] * ureg('ft^2')
     elif len(tidybuilding['total_floors']) == 1:
         floors = tidybuilding['total_floors'].iloc[0]
         fl_area = tidybuilding.geometry.area.iloc[0] * floors * ureg('ft^2')
