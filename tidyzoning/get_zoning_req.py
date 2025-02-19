@@ -202,4 +202,5 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
 
     result = zoning_extract(tidybuilding, tidyzoning, tidyparcel)
     processed_constraints = process_zoning_constraints(result, tidybuilding)
+    processed_constraints = processed_constraints.dropna(subset=['min_value', 'max_value'], how='all').reset_index(drop=True)
     return processed_constraints
