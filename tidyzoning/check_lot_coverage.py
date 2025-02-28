@@ -27,15 +27,8 @@ def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
     results = []
 
     # Calculate the floor area of the building
-    if len(tidybuilding['fl_area_bottom']) == 1:
-        footprint = tidybuilding['fl_area_bottom'].iloc[0] * ureg('ft^2')
-    elif len(tidybuilding['stories']) == 1 and len(tidybuilding['fl_area']) == 1:
-        floors = tidybuilding['stories'].iloc[0]
-        fl_area = tidybuilding['fl_area'].iloc[0]
-        footprint = (fl_area / floors) * ureg('ft^2')
-    elif len(tidybuilding['geometry']) == 1:
-        footprint = tidybuilding.geometry.area.iloc[0] * ureg('m^2')
-        footprint = footprint.to('ft^2')
+    if len(tidybuilding['footprint']) == 1:
+        footprint = tidybuilding['footprint'].iloc[0] * ureg('ft^2')
     else:
         print("Warning: No floor area found in tidybuilding")
         return pd.DataFrame(columns=['parcel_id', 'zoning_id', 'allowed'])  # Return an empty DataFrame

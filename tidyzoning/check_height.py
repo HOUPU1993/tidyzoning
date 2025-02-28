@@ -27,9 +27,6 @@ def check_height(tidybuilding, tidyzoning):
     # Calculate the floor area of the building
     if len(tidybuilding['height']) == 1:
         height = tidybuilding['height'].iloc[0] * ureg('ft')
-    elif len(tidybuilding['stories']) == 1:
-        floors = tidybuilding['stories'].iloc[0]
-        height = 12 * floors * ureg('ft') # height was recorded as feet
     else:
         print("Warning: No tidybuilding height recorded")
         return pd.DataFrame(columns=['zoning_id', 'allowed'])  # Return an empty DataFrame
