@@ -41,17 +41,6 @@ def unify_tidybuilding(file_path):
     for bed in unique_bedrooms:
         tidybuilding[f'units_{bed}bed'] = unit_info.loc[unit_info["bedrooms"] == bed, "qty"].sum()
     
-    # Calculate floor area for the bottom and top floors
-    tidybuilding['fl_area_bottom'] = (
-        unit_info[unit_info['level'] == unit_info['level'].min()]['fl_area'] *
-        unit_info[unit_info['level'] == unit_info['level'].min()]['qty']
-    ).sum()
-    
-    tidybuilding['fl_area_top'] = (
-        unit_info[unit_info['level'] == unit_info['level'].max()]['fl_area'] *
-        unit_info[unit_info['level'] == unit_info['level'].max()]['qty']
-    ).sum()
-    
     # Calculate the number of units per floor
     level_qty = unit_info.groupby("level")["qty"].sum()
     for floor in [1, 2, 3]:
