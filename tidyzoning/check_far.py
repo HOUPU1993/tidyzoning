@@ -27,8 +27,8 @@ def check_far(tidybuilding, tidyzoning, tidyparcel):
     results = []
 
     # Calculate the floor area of the building
-    if len(tidybuilding['fl_area']) == 1:
-        fl_area = tidybuilding['fl_area'].iloc[0]
+    if len(tidybuilding['gross_fl_area']) == 1:
+        fl_area = tidybuilding['gross_fl_area'].iloc[0]
     else:
         print("Warning: No floor area found in tidybuilding")
         return pd.DataFrame(columns=['parcel_id', 'zoning_id', 'allowed'])  # Return an empty DataFrame

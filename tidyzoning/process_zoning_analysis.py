@@ -39,7 +39,6 @@ def process_zoning_analysis(tidybuilding, tidyzoning, tidyparcel):
             check_fl_area,
             check_height,
             check_bedrooms,
-            check_unit_density,
             check_unit_size
         ]
         check_results = [func(tidybuilding, tidyzoning) for func in check_functions]
@@ -82,13 +81,18 @@ def process_zoning_analysis(tidybuilding, tidyzoning, tidyparcel):
         return pd.concat(all_results, ignore_index=True)
     final_results_far = compute_factors(tidybuilding, tidyzoning_filtered, tidyparcel_filtered, check_far)
     final_results_lot_coverage = compute_factors(tidybuilding, tidyzoning_filtered, tidyparcel_filtered, check_lot_coverage)
+    final_results_unit_density = compute_factors(tidybuilding, tidyzoning_filtered, tidyparcel_filtered, check_unit_density)
 
-    # 6. Merge FAR and Lot Coverage results
-    check_merge_far_lot_coverage = final_results_lot_coverage.merge(
-        final_results_far, left_index=True, right_index=True, suffixes=['', '_right']
+    # 6. Merge FAR, Lot Coverage results and unit_density
+    check_merge_far_lot_coverage = (
+        final_results_lot_coverage
+        .merge(final_results_far, left_index=True, right_index=True, suffixes=['', '_far'])
+        .merge(final_results_unit_density, left_index=True, right_index=True, suffixes=['', '_unit_density'])
     )
     check_merge_far_lot_coverage = check_merge_far_lot_coverage[
-        (check_merge_far_lot_coverage['allowed'] == True) & (check_merge_far_lot_coverage['allowed_right'] == True)
+        (check_merge_far_lot_coverage['allowed'] == True) & 
+        (check_merge_far_lot_coverage['allowed_far'] == True) & 
+        (check_merge_far_lot_coverage['allowed_unit_density'] == True)
     ]
     check_merge_far_lot_coverage = check_merge_far_lot_coverage[final_results_lot_coverage.columns]
 
