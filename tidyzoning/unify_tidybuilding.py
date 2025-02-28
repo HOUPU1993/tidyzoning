@@ -34,6 +34,7 @@ def unify_tidybuilding(file_path):
     tidybuilding['min_unit_size'] = unit_info['fl_area'].min()
     tidybuilding['total_bedrooms'] = (unit_info['bedrooms'] * unit_info['qty']).sum()
     tidybuilding['total_units'] = unit_info['qty'].sum()
+    tidybuilding['footprint'] = unit_info['width'] * unit_info['depth']
     
     # Calculate the number of units with different bedroom counts
     unique_bedrooms = unit_info["bedrooms"].unique()
