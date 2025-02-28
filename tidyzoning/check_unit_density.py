@@ -125,7 +125,7 @@ def check_unit_density(tidybuilding, tidyzoning, tidyparcel):
                 allowed = min_unit_density <= unit_density <= max_unit_density
                 results.append({'parcel_id': parcel_id, 'zoning_id': index, 'allowed': allowed})
             else:
-                results.append({'parcel_id': parcel_id, 'zoning_id': index, 'allowed': allowed})  # If zoning has no constraints, default to True
+                results.append({'parcel_id': parcel_id, 'zoning_id': index, 'allowed': True})  # If zoning has no constraints, default to True
 
     # Return a DataFrame containing the results for all zoning_ids
     return pd.DataFrame(results)
