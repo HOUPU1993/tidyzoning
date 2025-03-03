@@ -107,8 +107,6 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
             "units_4bed": units_4bed,
             "total_units": total_units,
             "fl_area": fl_area,
-            "fl_area_top": fl_area_top,
-            "fl_area_bottom": fl_area_bottom,
             "height": height,
             "height_eave": height_eave,
             "floors": floors,
@@ -118,10 +116,13 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
             "parking_covered": parking_covered,
             "parking_uncovered": parking_uncovered,
             "parking_floors": parking_floors,
+            "parking_bel_grade": parking_bel_grade,
             "garage_entry": garage_entry,
             "units_floor1": units_floor1,
             "units_floor2": units_floor2,
             "units_floor3": units_floor3,
+            "bldg_width": bldg_width,
+            "bldg_dpth": bldg_dpth,
             # Combined tidy zoning and tidyparcel together
             "far": far   
         }
@@ -130,19 +131,23 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         # If rules is a dict, like {'expression': '30'}
         if isinstance(rules, dict) and "expression" in rules:  
             try:
-                return eval(str(rules["expression"]), {}, context)
-            except Exception as e:
-                return None
+                return eval(str(rules["expression"]), {}, context), None
+            except Exception:
+                return "OZFS Error", None
         # If rules is a list, like [{'conditions': ['bedrooms== 0'], 'expression': 500}, {'conditions': ['bedrooms == 1'], 'expression': 700}]
         if not isinstance(rules, list):  
-            return None
+            return "OZFS Error", None
+        
         all_results = []
+        constraint_note = None
+        
         for rule in rules:
             conditions = rule.get("conditions", [])  # List: [{condition_1, expression_1},{condition_2, expression_2}]
             expression = rule.get("expression", None)  # Single string: {'expression': '30'}
             expressions_list = rule.get("expressions", [])  # List: [{'expression_1': '10'}.{'expression_2': '20'}.select:"min"]
             logical_operator = rule.get("logical_operator", None)  # Single string: [And/Or]
             select = rule.get("select", None)  # List: [min, max, unique, either]
+            select_info = rule.get("select_info", None) # specific select information
             try:
                 '''If logical_operator exists, calculate conditions_met according to AND / OR logic.
                    If conditions exist but logical_operator does not, still calculate conditions_met.
@@ -174,13 +179,21 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                     elif select == "unique":
                         all_results.append(list(set(temp_results)))  # Remove duplicates
                     elif select == "either":
-                        all_results.append(random.choice(temp_results))  # Random choice
+                        all_results.append(list(set(temp_results)))   # Random choice
                     else:
                         all_results.extend(temp_results)  # Default to store all results
-            except Exception as e:
-                continue
+                        
+                    # If `select_info` has a value, use it; if empty, default to "unique requirements not specified"
+                    if select_info:
+                        constraint_note = select_info
+                    elif constraint_note is None: 
+                        constraint_note = "unique requirements not specified"
+
+            except Exception:
+                return "OZFS Error", None
+            
         # Unified return value
-        return all_results[0] if len(all_results) == 1 else (all_results if all_results else None)
+        return (all_results[0] if len(all_results) == 1 else all_results) if all_results else "OZFS Error", constraint_note
 
     def process_zoning_constraints(result, tidybuilding):
         district_constraints = result["district_constraints"]
@@ -192,14 +205,17 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                 continue
             min_val_expression = constraint.get("min_val", None)
             max_val_expression = constraint.get("max_val", None)
-            constraint_min_val = evaluate_conditions_and_expressions(min_val_expression, context) if min_val_expression else None
-            constraint_max_val = evaluate_conditions_and_expressions(max_val_expression, context) if min_val_expression else None
+            constraint_min_val, constraint_min_note = evaluate_conditions_and_expressions(min_val_expression, context) if min_val_expression else ("OZFS Error", None)
+            constraint_max_val, constraint_max_note = evaluate_conditions_and_expressions(max_val_expression, context) if max_val_expression else ("OZFS Error", None)
+
             results.append({
                 "constraint_type": constraint.get("source_column", None),
                 "spec_type": constraint.get("constraint_type", None),
                 "min_value": constraint_min_val,
                 "max_value": constraint_max_val,
-                "unit": constraint.get("unit", None)
+                "unit": constraint.get("unit", None),
+                "constraint_min_note": constraint_min_note if constraint_min_note else "unique requirements not specified",
+                "constraint_max_note": constraint_max_note if constraint_max_note else "unique requirements not specified"
             })
         return pd.DataFrame(results)
 
