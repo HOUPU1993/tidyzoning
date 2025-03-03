@@ -18,6 +18,7 @@ from tidyzoning import check_fl_area
 from tidyzoning import check_far
 from tidyzoning import check_height
 from tidyzoning import check_bedrooms
+from tidyzoning import check_stories
 from tidyzoning import check_lot_coverage
 from tidyzoning import check_unit_density
 from tidyzoning import check_unit_size
