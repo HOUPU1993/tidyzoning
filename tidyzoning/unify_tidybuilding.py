@@ -29,7 +29,7 @@ def unify_tidybuilding(file_path):
     tidybuilding = building_info.copy()
     
     # Calculate floor area and unit information
-    tidybuilding['fl_area'] = (unit_info['fl_area'] * unit_info['qty']).sum()
+    tidybuilding['net_fl_area'] = (unit_info['fl_area'] * unit_info['qty']).sum()
     tidybuilding['max_unit_size'] = unit_info['fl_area'].max()
     tidybuilding['min_unit_size'] = unit_info['fl_area'].min()
     tidybuilding['total_bedrooms'] = (unit_info['bedrooms'] * unit_info['qty']).sum()
@@ -46,19 +46,39 @@ def unify_tidybuilding(file_path):
     for floor in [1, 2, 3]:
         tidybuilding[f'units_floor{floor}'] = level_qty.get(floor, 0)
     
-    # Handle parking data (if available)
+    # # Handle parking data (if available)
+    # if parking_info_file:
+    #     parking_info = pd.read_csv(parking_info_file)
+    #     if 'stalls' in parking_info.columns:
+    #         for p_type in ['enclosed', 'covered', 'uncovered']:
+    #             if (parking_info['type'] == p_type).any():
+    #                 tidybuilding[f'parking_{p_type}'] = parking_info.loc[parking_info['type'] == p_type, 'stalls'].sum()
+        
+    #     # Calculate the number of floors for different parking types
+    #     tidybuilding['parking_floors'] = str(parking_info.groupby('type')['level'].nunique().to_dict())
+        
+    #     # Calculate the number of garage entries for different types
+    #     if 'entry' in parking_info.columns:
+    #         tidybuilding['garage_entry'] = str(parking_info.groupby('type')['entry'].unique().apply(list).to_dict())
+
+    # 读取 parking_info 数据
     if parking_info_file:
         parking_info = pd.read_csv(parking_info_file)
-        if 'stalls' in parking_info.columns:
-            for p_type in ['enclosed', 'covered', 'uncovered']:
-                if (parking_info['type'] == p_type).any():
-                    tidybuilding[f'parking_{p_type}'] = parking_info.loc[parking_info['type'] == p_type, 'stalls'].sum()
-        
-        # Calculate the number of floors for different parking types
-        tidybuilding['parking_floors'] = str(parking_info.groupby('type')['level'].nunique().to_dict())
-        
-        # Calculate the number of garage entries for different types
-        if 'entry' in parking_info.columns:
-            tidybuilding['garage_entry'] = str(parking_info.groupby('type')['entry'].unique().apply(list).to_dict())
-    
+
+        # 计算不同类型的停车位数量
+        parking_covered = parking_info.loc[parking_info['type'] == 'covered', 'stalls'].sum()
+        parking_uncovered = parking_info.loc[parking_info['type'] == 'uncovered', 'stalls'].sum()
+        parking_enclosed = parking_info.loc[parking_info['type'] == 'enclosed', 'stalls'].sum()
+
+        # 计算停车楼层数量
+        parking_floors = len(parking_info['level'].dropna().unique()) if not parking_info['level'].isna().all() else 0
+
+        # 判断是否有地下停车场（level < 0）
+        parking_bel_grade = "yes" if (parking_info['level'].dropna() < 0).any() else "no"
+
+        # 获取车库入口信息
+        valid_entries = parking_info['entry'].dropna().unique()
+        garage_entry = valid_entries[0] if len(valid_entries) > 0 and any(valid_entries > 0) else np.nan
+
+
     return tidybuilding

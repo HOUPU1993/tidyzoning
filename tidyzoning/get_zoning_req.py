@@ -63,16 +63,16 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
             'units_3bed': 3,
             'units_4bed': 4
         }
-        bedrooms = max([bed_list.get(col, 0) for col in tidybuilding.columns if col in bed_list.keys()])
+        
+        bedrooms = None
+        total_bedrooms = tidybuilding.get('total_bedrooms', [None])[0]
         units_0bed = tidybuilding['units_0bed'].sum() if 'units_0bed' in tidybuilding.columns else 0
         units_1bed = tidybuilding['units_1bed'].sum() if 'units_1bed' in tidybuilding.columns else 0
         units_2bed = tidybuilding['units_2bed'].sum() if 'units_2bed' in tidybuilding.columns else 0
         units_3bed = tidybuilding['units_3bed'].sum() if 'units_3bed' in tidybuilding.columns else 0
         units_4bed = tidybuilding['units_4bed'].sum() if 'units_4bed' in tidybuilding.columns else 0
         total_units = units_0bed + units_1bed + units_2bed + units_3bed + units_4bed
-        fl_area = tidybuilding.get('fl_area', [None])[0]
-        fl_area_top = tidybuilding.get('fl_area_top', [None])[0]
-        fl_area_bottom = tidybuilding.get('fl_area_bottom', [None])[0]
+        fl_area = tidybuilding.get('gross_fl_area', [None])[0]
         height = tidybuilding.get('height', [None])[0]
         height_eave = tidybuilding.get('height_eave', [None])[0]
         floors = tidybuilding.get('stories', [None])[0]
