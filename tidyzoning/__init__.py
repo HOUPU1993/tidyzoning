@@ -10,8 +10,8 @@ from .check_bedrooms import check_bedrooms
 from .check_lot_coverage import check_lot_coverage
 from .check_unit_density import check_unit_density
 from .check_unit_size import check_unit_size
+from .check_stories import check_stories
 from .add_setbacks import add_setbacks
 from .get_buildable_area import get_buildable_area
 from .process_zoning_analysis import process_zoning_analysis
 from .unify_tidybuilding import unify_tidybuilding
-from .check_stories import check_stories
