@@ -3,7 +3,7 @@ import numpy as np
 import geopandas as gpd
 from tidyzoning import get_zoning_req
 
-def check_bedrooms(tidybuilding, tidyzoning):
+def check_stories(tidybuilding, tidyzoning):
     """
     Checks whether the bedrooms of a given building complies with zoning constraints.
 
@@ -17,25 +17,15 @@ def check_bedrooms(tidybuilding, tidyzoning):
     DataFrame
         A DataFrame with the following columns:
         - 'zoning_id': The index of the corresponding row from `tidyzoning`.
-        - 'allowed': A boolean value indicating whether the building's bedrooms 
+        - 'allowed': A boolean value indicating whether the building's stories 
     """
     results = []
-    # Check the data from the tidybuilding
-    bed_list = {
-        'units_0bed': 0,
-        'units_1bed': 1,
-        'units_2bed': 2,
-        'units_3bed': 3,
-        'units_4bed': 4
-    }
-    # find units_Xbed column in tidybuilding
-    matching_beds = [bed_list[col] for col in tidybuilding.columns if col in bed_list]
-    # find min_beds and max_beds
-    if matching_beds:
-        min_beds = min(matching_beds)
-        max_beds = max(matching_beds)
+
+    # Calculate the floor area of the building
+    if len(tidybuilding['stories']) == 1:
+        stories = tidybuilding['stories'].iloc[0]
     else:
-        print("Warning: No bedrooms found in tidybuilding")
+        print("Warning: No tidybuilding stories recorded")
         return pd.DataFrame(columns=['zoning_id', 'allowed'])  # Return an empty DataFrame
 
     # Iterate through each row in tidyzoning
@@ -50,16 +40,16 @@ def check_bedrooms(tidybuilding, tidyzoning):
         if zoning_req is None or zoning_req.empty:
             results.append({'zoning_id': index, 'allowed': True})
             continue
-        # Check if bedrooms meets the zoning constraints
-        if 'bedrooms' in zoning_req['spec_type'].values:
-            bedrooms_row = zoning_req[zoning_req['spec_type'] == 'bedrooms']  # Extract the specific row
-            min_bedrooms = bedrooms_row['min_value'].values[0]  # Extract value
-            max_bedrooms = bedrooms_row['max_value'].values[0]  # Extract value
+        # Check if stories meets the zoning constraints
+        if 'stories' in zoning_req['spec_type'].values:
+            stories_row = zoning_req[zoning_req['spec_type'] == 'stories']  # Extract the specific row
+            min_stories = stories_row['min_value'].values[0]  # Extract value
+            max_stories = stories_row['max_value'].values[0]  # Extract value
             # Handle NaN values
-            min_bedrooms = 0 if pd.isna(min_bedrooms) else min_bedrooms  # Set a very small value if no value
-            max_bedrooms = 1000000 if pd.isna(max_bedrooms) else max_bedrooms  # Set a very large value if no value
+            min_stories = 0 if pd.isna(min_stories) else min_stories  # Set a very small value if no value
+            max_stories = 1000000 if pd.isna(max_stories) else max_stories  # Set a very large value if no value
             # Check the area range
-            allowed = min_beds >= min_bedrooms and  max_beds <= max_bedrooms
+            allowed = min_stories <= stories <= max_stories
             results.append({'zoning_id': index, 'allowed': allowed})
         else:
             results.append({'zoning_id': index, 'allowed': True})  # If zoning has no constraints, default to True

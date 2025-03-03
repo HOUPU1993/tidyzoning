@@ -39,6 +39,7 @@ def process_zoning_analysis(tidybuilding, tidyzoning, tidyparcel):
             check_fl_area,
             check_height,
             check_bedrooms,
+            check_stories,
             check_unit_size
         ]
         check_results = [func(tidybuilding, tidyzoning) for func in check_functions]
