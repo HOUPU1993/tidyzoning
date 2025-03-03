@@ -71,7 +71,7 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         units_2bed = tidybuilding['units_2bed'].sum() if 'units_2bed' in tidybuilding.columns else 0
         units_3bed = tidybuilding['units_3bed'].sum() if 'units_3bed' in tidybuilding.columns else 0
         units_4bed = tidybuilding['units_4bed'].sum() if 'units_4bed' in tidybuilding.columns else 0
-        total_units = units_0bed + units_1bed + units_2bed + units_3bed + units_4bed
+        total_units = tidybuilding.get('total_units', [None])[0]
         fl_area = tidybuilding.get('gross_fl_area', [None])[0]
         height = tidybuilding.get('height', [None])[0]
         height_eave = tidybuilding.get('height_eave', [None])[0]
@@ -82,10 +82,13 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         parking_covered = tidybuilding.get('parking_covered', [None])[0]
         parking_uncovered = tidybuilding.get('parking_uncovered', [None])[0]
         parking_floors = tidybuilding.get('parking_floors', [None])[0]
+        parking_bel_grade = tidybuilding.get('parking_bel_grade', [None])[0]
         garage_entry = tidybuilding.get('garage_entry', [None])[0]
         units_floor1 = tidybuilding.get('units_floor1', [None])[0]
         units_floor2 = tidybuilding.get('units_floor2', [None])[0]
         units_floor3 = tidybuilding.get('units_floor3', [None])[0]
+        bldg_width = tidybuilding.get('width', [None])[0]
+        bldg_dpth  = tidybuilding.get('depth', [None])[0]
         far = fl_area / lot_area if lot_area is not None else None
 
         return {

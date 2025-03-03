@@ -39,8 +39,11 @@ def unify_tidybuilding(file_path):
     # Calculate the number of units with different bedroom counts
     unique_bedrooms = unit_info["bedrooms"].unique()
     for bed in unique_bedrooms:
-        tidybuilding[f'units_{bed}bed'] = unit_info.loc[unit_info["bedrooms"] == bed, "qty"].sum()
-    
+        if bed < 4:
+            tidybuilding[f'units_{bed}bed'] = unit_info.loc[unit_info["bedrooms"] == bed, "qty"].sum()
+        else:
+            tidybuilding["units_4bed"] = tidybuilding.get("units_4bed", 0) + unit_info.loc[unit_info["bedrooms"] == bed, "qty"].sum()
+
     # Calculate the number of units per floor
     level_qty = unit_info.groupby("level")["qty"].sum()
     for floor in [1, 2, 3]:
@@ -61,14 +64,12 @@ def unify_tidybuilding(file_path):
         # Get garage entry locations
         valid_entries = parking_info['entry'].dropna().unique()
         garage_entry = valid_entries if len(valid_entries) > 0 else np.nan
-        # Update tidybuilding instead of overwriting it
-        tidybuilding.update({
-            'parking_covered': parking_covered,
-            'parking_uncovered': parking_uncovered,
-            'parking_enclosed': parking_enclosed,
-            'parking_floors': parking_floors,
-            'parking_bel_grade': parking_bel_grade,
-            'garage_entry': garage_entry
-        })
+        # add specific column to store the value
+        tidybuilding["parking_covered"] = parking_covered
+        tidybuilding["parking_uncovered"] = parking_uncovered
+        tidybuilding["parking_enclosed"] = parking_enclosed
+        tidybuilding["parking_floors"] = parking_floors
+        tidybuilding["parking_bel_grade"] = parking_bel_grade
+        tidybuilding["garage_entry"] = [garage_entry]
 
     return tidybuilding
