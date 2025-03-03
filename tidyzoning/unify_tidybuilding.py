@@ -45,40 +45,30 @@ def unify_tidybuilding(file_path):
     level_qty = unit_info.groupby("level")["qty"].sum()
     for floor in [1, 2, 3]:
         tidybuilding[f'units_floor{floor}'] = level_qty.get(floor, 0)
-    
-    # # Handle parking data (if available)
-    # if parking_info_file:
-    #     parking_info = pd.read_csv(parking_info_file)
-    #     if 'stalls' in parking_info.columns:
-    #         for p_type in ['enclosed', 'covered', 'uncovered']:
-    #             if (parking_info['type'] == p_type).any():
-    #                 tidybuilding[f'parking_{p_type}'] = parking_info.loc[parking_info['type'] == p_type, 'stalls'].sum()
-        
-    #     # Calculate the number of floors for different parking types
-    #     tidybuilding['parking_floors'] = str(parking_info.groupby('type')['level'].nunique().to_dict())
-        
-    #     # Calculate the number of garage entries for different types
-    #     if 'entry' in parking_info.columns:
-    #         tidybuilding['garage_entry'] = str(parking_info.groupby('type')['entry'].unique().apply(list).to_dict())
 
-    # 读取 parking_info 数据
+    # Read parking_info data
     if parking_info_file:
         parking_info = pd.read_csv(parking_info_file)
 
-        # 计算不同类型的停车位数量
+        # Calculate parking types
         parking_covered = parking_info.loc[parking_info['type'] == 'covered', 'stalls'].sum()
         parking_uncovered = parking_info.loc[parking_info['type'] == 'uncovered', 'stalls'].sum()
         parking_enclosed = parking_info.loc[parking_info['type'] == 'enclosed', 'stalls'].sum()
-
-        # 计算停车楼层数量
+        # Calculate number of floors with parking
         parking_floors = len(parking_info['level'].dropna().unique()) if not parking_info['level'].isna().all() else 0
-
-        # 判断是否有地下停车场（level < 0）
+        # Check for underground parking
         parking_bel_grade = "yes" if (parking_info['level'].dropna() < 0).any() else "no"
-
-        # 获取车库入口信息
+        # Get garage entry locations
         valid_entries = parking_info['entry'].dropna().unique()
-        garage_entry = valid_entries[0] if len(valid_entries) > 0 and any(valid_entries > 0) else np.nan
-
+        garage_entry = valid_entries if len(valid_entries) > 0 else np.nan
+        # Update tidybuilding instead of overwriting it
+        tidybuilding.update({
+            'parking_covered': parking_covered,
+            'parking_uncovered': parking_uncovered,
+            'parking_enclosed': parking_enclosed,
+            'parking_floors': parking_floors,
+            'parking_bel_grade': parking_bel_grade,
+            'garage_entry': garage_entry
+        })
 
     return tidybuilding
