@@ -130,13 +130,16 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
     def evaluate_conditions_and_expressions(rules, context):
         # If rules is a dict, like {'expression': '30'}
         if isinstance(rules, dict) and "expression" in rules:  
+            # If the expression is "NA" or other non-numeric string, return None
+            if str(rules["expression"]).strip().upper() == "NA":
+                return None, None  
             try:
                 return eval(str(rules["expression"]), {}, context), None
             except Exception:
                 return "OZFS Error", None
         # If rules is a list, like [{'conditions': ['bedrooms== 0'], 'expression': 500}, {'conditions': ['bedrooms == 1'], 'expression': 700}]
         if not isinstance(rules, list):  
-            return "OZFS Error", None
+            return None, None
         
         all_results = []
         constraint_note = None
@@ -205,8 +208,8 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                 continue
             min_val_expression = constraint.get("min_val", None)
             max_val_expression = constraint.get("max_val", None)
-            constraint_min_val, constraint_min_note = evaluate_conditions_and_expressions(min_val_expression, context) if min_val_expression else ("OZFS Error", None)
-            constraint_max_val, constraint_max_note = evaluate_conditions_and_expressions(max_val_expression, context) if max_val_expression else ("OZFS Error", None)
+            constraint_min_val, constraint_min_note = evaluate_conditions_and_expressions(min_val_expression, context) if min_val_expression else (None, None)
+            constraint_max_val, constraint_max_note = evaluate_conditions_and_expressions(max_val_expression, context) if max_val_expression else (None, None)
 
             results.append({
                 "constraint_type": constraint.get("source_column", None),
@@ -214,8 +217,8 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                 "min_value": constraint_min_val,
                 "max_value": constraint_max_val,
                 "unit": constraint.get("unit", None),
-                "constraint_min_note": constraint_min_note if constraint_min_note else "unique requirements not specified",
-                "constraint_max_note": constraint_max_note if constraint_max_note else "unique requirements not specified"
+                "constraint_min_note": constraint_min_note if constraint_min_note  else None,
+                "constraint_max_note": constraint_max_note if constraint_max_note else None
             })
         return pd.DataFrame(results)
 
