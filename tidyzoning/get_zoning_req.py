@@ -132,17 +132,18 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         if isinstance(rules, dict) and "expression" in rules:  
             # If the expression is "NA" or other non-numeric string, return None
             if str(rules["expression"]).strip().upper() == "NA":
-                return None, None  
+                return None, None, None  
             try:
-                return eval(str(rules["expression"]), {}, context), None
+                return eval(str(rules["expression"]), {}, context), None, None
             except Exception:
-                return "OZFS Error", None
+                return "OZFS Error", None, None
         # If rules is a list, like [{'conditions': ['bedrooms== 0'], 'expression': 500}, {'conditions': ['bedrooms == 1'], 'expression': 700}]
         if not isinstance(rules, list):  
-            return None, None
+            return None, None, None
         
         all_results = []
         constraint_note = None
+        select_value = None
         
         for rule in rules:
             conditions = rule.get("conditions", [])  # List: [{condition_1, expression_1},{condition_2, expression_2}]
@@ -151,6 +152,9 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
             logical_operator = rule.get("logical_operator", None)  # Single string: [And/Or]
             select = rule.get("select", None)  # List: [min, max, unique, either]
             select_info = rule.get("select_info", None) # specific select information
+            
+            if select:
+                select_value = select
             try:
                 '''If logical_operator exists, calculate conditions_met according to AND / OR logic.
                    If conditions exist but logical_operator does not, still calculate conditions_met.
@@ -193,10 +197,10 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                         constraint_note = "unique requirements not specified"
 
             except Exception:
-                return "OZFS Error", None
+                return "OZFS Error", None, None
             
         # Unified return value
-        return (all_results[0] if len(all_results) == 1 else all_results) if all_results else "OZFS Error", constraint_note
+        return (all_results[0] if len(all_results) == 1 else all_results) if all_results else "OZFS Error", constraint_note, select_value
 
     def process_zoning_constraints(result, tidybuilding):
         district_constraints = result["district_constraints"]
@@ -208,8 +212,8 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                 continue
             min_val_expression = constraint.get("min_val", None)
             max_val_expression = constraint.get("max_val", None)
-            constraint_min_val, constraint_min_note = evaluate_conditions_and_expressions(min_val_expression, context) if min_val_expression else (None, None)
-            constraint_max_val, constraint_max_note = evaluate_conditions_and_expressions(max_val_expression, context) if max_val_expression else (None, None)
+            constraint_min_val, constraint_min_note, min_select = evaluate_conditions_and_expressions(min_val_expression, context) if min_val_expression else (None, None, None)
+            constraint_max_val, constraint_max_note, max_select = evaluate_conditions_and_expressions(max_val_expression, context) if max_val_expression else (None, None, None)
 
             results.append({
                 "constraint_type": constraint.get("source_column", None),
@@ -218,7 +222,9 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                 "max_value": constraint_max_val,
                 "unit": constraint.get("unit", None),
                 "constraint_min_note": constraint_min_note if constraint_min_note  else None,
-                "constraint_max_note": constraint_max_note if constraint_max_note else None
+                "constraint_max_note": constraint_max_note if constraint_max_note else None,
+                "min_select": min_select if min_select else None,
+                "max_select": max_select if max_select else None
             })
         return pd.DataFrame(results)
 
