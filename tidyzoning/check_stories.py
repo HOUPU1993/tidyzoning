@@ -57,10 +57,19 @@ def check_stories(tidybuilding, tidyzoning, tidyparcel=None):
                 results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
                 continue
             
-            # Handle NaN values and lists
-            min_stories = [0] if min_stories is None else (min_stories if isinstance(min_stories, list) else [min_stories])
-            max_stories = [1000000] if max_stories is None else (max_stories if isinstance(max_stories, list) else [max_stories])
+            # Handle NaN values and list
+            # Handle min_stories
+            if not isinstance(min_stories, list):
+                min_stories = [0] if min_stories is None or pd.isna(min_stories) else [min_stories]
+            elif all(pd.isna(v) for v in min_stories):  # Handle list of NaNs
+                min_stories = [0]
 
+            # Handle max_stories
+            if not isinstance(max_stories, list):
+                max_stories = [1000000] if max_stories is None or pd.isna(max_stories) else [max_stories]
+            elif all(pd.isna(v) for v in max_stories):  # Handle list of NaNs
+                max_stories = [1000000]
+            
             # Check min condition
             min_check_1 = min(min_stories) <= stories
             min_check_2 = max(min_stories) <= stories
