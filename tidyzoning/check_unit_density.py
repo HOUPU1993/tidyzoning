@@ -21,6 +21,8 @@ def check_unit_density(tidybuilding, tidyzoning, tidyparcel):
         A DataFrame with the following columns:
         - 'zoning_id': The index of the corresponding row from `tidyzoning`.
         - 'allowed': A boolean value indicating whether the building's building's unit density is compliant.
+        - 'constraint_min_note': The constraint note for the minimum value.
+        - 'constraint_max_note': The constraint note for the maximum value.
     """
     results = []
     # Check the data from the tidybuilding
@@ -36,39 +38,92 @@ def check_unit_density(tidybuilding, tidyzoning, tidyparcel):
         parcel_without_centroid = group[(group['side'].notna()) & (group['side'] != "centroid")]
         polygons = list(polygonize(unary_union(parcel_without_centroid.geometry)))
         lot_polygon = unary_union(polygons)
-        lot_area = lot_polygon.area * 10.7639 / 43560 # Convert m2 to ft² , then to acres
+        lot_area = lot_polygon.area / 4046.86 # Convert m2 to acres
 
         if lot_area == 0:
-            print(f"Warning: Lot area is zero for parcel_id {parcel_id}")
             continue
         
         unit_density = total_units / lot_area #units per acre
-        
+
         # Iterate through each row in tidyzoning
         for index, zoning_row in tidyzoning.iterrows():
-            zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T)  # ✅ Fix the issue of passing Series
+            zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)  # ✅ Fix the issue of passing Series
 
             # Fix the string check here
             if isinstance(zoning_req, str) and zoning_req == "No zoning requirements recorded for this district":
-                results.append({'parcel_id': parcel_id, 'zoning_id': index, 'allowed': True})
+                results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
                 continue
             # If zoning_req is empty, consider it allowed
             if zoning_req is None or zoning_req.empty:
-                results.append({'parcel_id': parcel_id, 'zoning_id': index, 'allowed': True})
+                results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
                 continue
-            # Check if unit_density meets the zoning constraints
+            # Check if zoning constraints include 'unit_density'
             if 'unit_density' in zoning_req['spec_type'].values:
-                unit_density_row = zoning_req[zoning_req['spec_type'] == 'unit_density']  # Extract the specific row
-                min_unit_density = unit_density_row['min_value'].values[0]  # Extract value
-                max_unit_density = unit_density_row['max_value'].values[0]  # Extract value
-                # Handle NaN values
-                min_unit_density = 0 if pd.isna(min_unit_density) else min_unit_density  # Set a very small value if no value
-                max_unit_density = 1000000 if pd.isna(max_unit_density) else max_unit_density  # Set a very large value if no value
-                # Check the area range
-                allowed = min_unit_density <= unit_density <= max_unit_density
-                results.append({'parcel_id': parcel_id, 'zoning_id': index, 'allowed': allowed})
-            else:
-                results.append({'parcel_id': parcel_id, 'zoning_id': index, 'allowed': True})  # If zoning has no constraints, default to True
+                unit_density_row = zoning_req[zoning_req['spec_type'] == 'unit_density']
+                min_unit_density = unit_density_row['min_value'].values[0]  # Extract min values
+                max_unit_density = unit_density_row['max_value'].values[0]  # Extract max values
+                min_select = unit_density_row['min_select'].values[0]  # Extract min select info
+                max_select = unit_density_row['max_select'].values[0]  # Extract max select info
+                constraint_min_note = unit_density_row['constraint_min_note'].values[0] # Extract min constraint note
+                constraint_max_note = unit_density_row['constraint_max_note'].values[0] # Extract max constraint note
+                
+                # If min_select or max_select is 'OZFS Error', default to allowed
+                if min_select == 'OZFS Error' or max_select == 'OZFS Error':
+                    results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
+                    continue
 
-    # Return a DataFrame containing the results for all zoning_ids
+                # Handle NaN values and list
+                # Handle min_unit_density
+                if not isinstance(min_unit_density, list):
+                    min_unit_density = [0] if min_unit_density is None or pd.isna(min_unit_density) or isinstance(min_unit_density, str) else [min_unit_density]
+                else:
+                    # Filter out NaN and None values, ensuring at least one valid value
+                    min_unit_density = [v for v in min_unit_density if pd.notna(v) and v is not None and not isinstance(v, str)]
+                    if not min_unit_density:  # If all values are NaN or None, replace with default value
+                        min_unit_density = [0]
+                # Handle max_unit_density
+                if not isinstance(max_unit_density, list):
+                    max_unit_density = [1000000] if max_unit_density is None or pd.isna(max_unit_density) or isinstance(max_unit_density, str) else [max_unit_density]
+                else:
+                    # Filter out NaN and None values, ensuring at least one valid value
+                    max_unit_density = [v for v in max_unit_density if pd.notna(v) and v is not None and not isinstance(v, str)]
+                    if not max_unit_density:  # If all values are NaN or None, replace with default value
+                        max_unit_density = [1000000]
+                
+                # Check min condition
+                min_check_1 = min(min_unit_density) <= unit_density
+                min_check_2 = max(min_unit_density) <= unit_density
+                if min_select in ["either", None]:
+                    min_allowed = min_check_1 or min_check_2
+                elif min_select == "unique":
+                    if min_check_1 and min_check_2:
+                        min_allowed = True
+                    elif not min_check_1 and not min_check_2:
+                        min_allowed = False
+                    else:
+                        min_allowed = "MAYBE"
+                
+                # Check max condition
+                max_check_1 = min(max_unit_density) >= unit_density
+                max_check_2 = max(max_unit_density) >= unit_density
+                if max_select in ["either", None]:
+                    max_allowed = max_check_1 or max_check_2
+                elif max_select == "unique":
+                    if max_check_1 and max_check_2:
+                        max_allowed = True
+                    elif not max_check_1 and not max_check_2:
+                        max_allowed = False
+                    else:
+                        max_allowed = "MAYBE"
+                
+                # Determine final allowed status
+                if min_allowed == "MAYBE" or max_allowed == "MAYBE":
+                    allowed = "MAYBE"
+                else:
+                    allowed = min_allowed and max_allowed
+                
+                results.append({'zoning_id': index, 'allowed': allowed, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
+            else:
+                results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})  # If zoning has no constraints, default to True
+
     return pd.DataFrame(results)

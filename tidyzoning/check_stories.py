@@ -11,7 +11,8 @@ def check_stories(tidybuilding, tidyzoning, tidyparcel=None):
     ----------
     tidybuilding : A GeoDataFrame containing information about a single building. 
     tidyzoning : A GeoDataFrame containing zoning constraints. It may have multiple rows,
-
+    tidyparcel : Optional
+    
     Returns:
     -------
     DataFrame
@@ -27,7 +28,6 @@ def check_stories(tidybuilding, tidyzoning, tidyparcel=None):
     if len(tidybuilding['stories']) == 1:
         stories = tidybuilding['stories'].iloc[0]
     else:
-        print("Warning: No tidybuilding stories recorded")
         return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note']) # Return an empty DataFrame
 
     # Iterate through each row in tidyzoning
@@ -56,19 +56,24 @@ def check_stories(tidybuilding, tidyzoning, tidyparcel=None):
             if min_select == 'OZFS Error' or max_select == 'OZFS Error':
                 results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
                 continue
-            
+
             # Handle NaN values and list
             # Handle min_stories
             if not isinstance(min_stories, list):
-                min_stories = [0] if min_stories is None or pd.isna(min_stories) else [min_stories]
-            elif all(pd.isna(v) for v in min_stories):  # Handle list of NaNs
-                min_stories = [0]
-
+                min_stories = [0] if min_stories is None or pd.isna(min_stories) or isinstance(min_stories, str) else [min_stories]
+            else:
+                # Filter out NaN and None values, ensuring at least one valid value
+                min_stories = [v for v in min_stories if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not min_stories:  # If all values are NaN or None, replace with default value
+                    min_stories = [0]
             # Handle max_stories
             if not isinstance(max_stories, list):
-                max_stories = [1000000] if max_stories is None or pd.isna(max_stories) else [max_stories]
-            elif all(pd.isna(v) for v in max_stories):  # Handle list of NaNs
-                max_stories = [1000000]
+                max_stories = [1000000] if max_stories is None or pd.isna(max_stories) or isinstance(max_stories, str) else [max_stories]
+            else:
+                # Filter out NaN and None values, ensuring at least one valid value
+                max_stories = [v for v in max_stories if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not max_stories:  # If all values are NaN or None, replace with default value
+                    max_stories = [1000000]
             
             # Check min condition
             min_check_1 = min(min_stories) <= stories

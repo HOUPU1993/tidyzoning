@@ -3,7 +3,7 @@ import numpy as np
 import geopandas as gpd
 from tidyzoning import get_zoning_req
 
-def check_bedrooms(tidybuilding, tidyzoning):
+def check_bedrooms(tidybuilding, tidyzoning, tidyparcel=None):
     """
     Checks whether the bedrooms of a given building complies with zoning constraints.
 
@@ -11,13 +11,16 @@ def check_bedrooms(tidybuilding, tidyzoning):
     ----------
     tidybuilding : A GeoDataFrame containing information about a single building. 
     tidyzoning : A GeoDataFrame containing zoning constraints. It may have multiple rows,
-
+    tidyparcel : Optional
+    
     Returns:
     -------
     DataFrame
         A DataFrame with the following columns:
         - 'zoning_id': The index of the corresponding row from `tidyzoning`.
         - 'allowed': A boolean value indicating whether the building's bedrooms 
+        - 'constraint_min_note': The constraint note for the minimum value.
+        - 'constraint_max_note': The constraint note for the maximum value.
     """
     results = []
     # Check the data from the tidybuilding
@@ -35,34 +38,87 @@ def check_bedrooms(tidybuilding, tidyzoning):
         min_beds = min(matching_beds)
         max_beds = max(matching_beds)
     else:
-        print("Warning: No bedrooms found in tidybuilding")
-        return pd.DataFrame(columns=['zoning_id', 'allowed'])  # Return an empty DataFrame
+        return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note']) # Return an empty DataFrame
 
     # Iterate through each row in tidyzoning
     for index, zoning_row in tidyzoning.iterrows():
-        zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T)  # ✅ Fix the issue of passing Series
+        zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)  # ✅ Fix the issue of passing Series
 
         # Fix the string check here
         if isinstance(zoning_req, str) and zoning_req == "No zoning requirements recorded for this district":
-            results.append({'zoning_id': index, 'allowed': True})
+            results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
             continue
         # If zoning_req is empty, consider it allowed
         if zoning_req is None or zoning_req.empty:
-            results.append({'zoning_id': index, 'allowed': True})
+            results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
             continue
-        # Check if bedrooms meets the zoning constraints
+        # Check if zoning constraints include 'bedrooms'
         if 'bedrooms' in zoning_req['spec_type'].values:
-            bedrooms_row = zoning_req[zoning_req['spec_type'] == 'bedrooms']  # Extract the specific row
-            min_bedrooms = bedrooms_row['min_value'].values[0]  # Extract value
-            max_bedrooms = bedrooms_row['max_value'].values[0]  # Extract value
-            # Handle NaN values
-            min_bedrooms = 0 if pd.isna(min_bedrooms) else min_bedrooms  # Set a very small value if no value
-            max_bedrooms = 1000000 if pd.isna(max_bedrooms) else max_bedrooms  # Set a very large value if no value
-            # Check the area range
-            allowed = min_beds >= min_bedrooms and  max_beds <= max_bedrooms
-            results.append({'zoning_id': index, 'allowed': allowed})
-        else:
-            results.append({'zoning_id': index, 'allowed': True})  # If zoning has no constraints, default to True
+            bedrooms_row = zoning_req[zoning_req['spec_type'] == 'bedrooms']
+            min_bedrooms = bedrooms_row['min_value'].values[0]  # Extract min values
+            max_bedrooms = bedrooms_row['max_value'].values[0]  # Extract max values
+            min_select = bedrooms_row['min_select'].values[0]  # Extract min select info
+            max_select = bedrooms_row['max_select'].values[0]  # Extract max select info
+            constraint_min_note = bedrooms_row['constraint_min_note'].values[0] # Extract min constraint note
+            constraint_max_note = bedrooms_row['constraint_max_note'].values[0] # Extract max constraint note
+            
+            # If min_select or max_select is 'OZFS Error', default to allowed
+            if min_select == 'OZFS Error' or max_select == 'OZFS Error':
+                results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
+                continue
 
-    # Return a DataFrame containing the results for all zoning_ids
+            # Handle NaN values and list
+            # Handle min_bedrooms
+            if not isinstance(min_bedrooms, list):
+                min_bedrooms = [0] if min_bedrooms is None or pd.isna(min_bedrooms) or isinstance(min_bedrooms, str) else [min_bedrooms]
+            else:
+                # Filter out NaN and None values, ensuring at least one valid value
+                min_bedrooms = [v for v in min_bedrooms if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not min_bedrooms:  # If all values are NaN or None, replace with default value
+                    min_bedrooms = [0]
+            # Handle max_bedrooms
+            if not isinstance(max_bedrooms, list):
+                max_bedrooms = [100] if max_bedrooms is None or pd.isna(max_bedrooms) or isinstance(max_bedrooms, str) else [max_bedrooms]
+            else:
+                # Filter out NaN and None values, ensuring at least one valid value
+                max_bedrooms = [v for v in max_bedrooms if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not max_bedrooms:  # If all values are NaN or None, replace with default value
+                    max_bedrooms = [100]
+            
+            # Check min condition
+            min_check_1 = min(min_bedrooms) <= min_beds
+            min_check_2 = max(min_bedrooms) <= min_beds
+            if min_select in ["either", None]:
+                min_allowed = min_check_1 or min_check_2
+            elif min_select == "unique":
+                if min_check_1 and min_check_2:
+                    min_allowed = True
+                elif not min_check_1 and not min_check_2:
+                    min_allowed = False
+                else:
+                    min_allowed = "MAYBE"
+            
+            # Check max condition
+            max_check_1 = min(max_bedrooms) >= max_beds
+            max_check_2 = max(max_bedrooms) >= max_beds
+            if max_select in ["either", None]:
+                max_allowed = max_check_1 or max_check_2
+            elif max_select == "unique":
+                if max_check_1 and max_check_2:
+                    max_allowed = True
+                elif not max_check_1 and not max_check_2:
+                    max_allowed = False
+                else:
+                    max_allowed = "MAYBE"
+            
+            # Determine final allowed status
+            if min_allowed == "MAYBE" or max_allowed == "MAYBE":
+                allowed = "MAYBE"
+            else:
+                allowed = min_allowed and max_allowed
+            
+            results.append({'zoning_id': index, 'allowed': allowed, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
+        else:
+            results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})  # If zoning has no constraints, default to True
+
     return pd.DataFrame(results)
