@@ -40,7 +40,7 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel):
     for parcel_id, group in tidyparcel.groupby("parcel_id"):
         # Iterate through each row in tidyzoning
         for index, zoning_row in tidyzoning.iterrows():
-            zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T)  # ✅ Fix the issue of passing Series
+            zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)  # ✅ Fix the issue of passing Series
 
             # If no zoning constraints exist, leave setbacks and units as None
             if zoning_req is None or zoning_req.empty:
