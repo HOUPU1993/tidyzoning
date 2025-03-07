@@ -1,83 +1,146 @@
 import pandas as pd
 import numpy as np
-from pint import UnitRegistry
 import geopandas as gpd
-from tidyzoning import get_zoning_req
 
 def check_unit_size(tidybuilding, tidyzoning):
-    """
-    Checks whether the unit size of a given building complies with zoning constraints.
-
-    Parameters:
-    ----------
-    tidybuilding : GeoDataFrame
-        A GeoDataFrame containing information about a single building. 
-    tidyzoning : GeoDataFrame
-        A GeoDataFrame containing zoning constraints. It may have multiple rows,
-        each representing a different zoning rule that applies to the given building.
-    
-    Returns:
-    -------
-    DataFrame
-        A DataFrame with two columns:
-        - 'zoning_id': The index of the corresponding row from `tidyzoning`.
-        - 'allowed': A boolean value indicating whether the building's floor area 
-          complies with the zoning regulations (True if compliant, False otherwise).
-    """
-    ureg = UnitRegistry()
     results = []
 
-    # Determine min_size and max_size based on tidybuilding DataFrame
-    if len(tidybuilding['max_unit_size']) == 1 and len(tidybuilding['min_unit_size']) == 1:
-        min_size = tidybuilding['min_unit_size'].iloc[0] * ureg('ft^2')
-        max_size = tidybuilding['max_unit_size'].iloc[0] * ureg('ft^2')
-    elif len(tidybuilding['max_unit_size']) == 1:
-        min_size = tidybuilding['max_unit_size'].iloc[0] * ureg('ft^2')
-        max_size = tidybuilding['max_unit_size'].iloc[0] * ureg('ft^2')
-    elif len(tidybuilding['min_unit_size']) == 1:
-        min_size = tidybuilding['min_unit_size'].iloc[0] * ureg('ft^2')
-        max_size = tidybuilding['min_unit_size'].iloc[0] * ureg('ft^2')
-    else:
-        print("Warning: No valid unit sizes found in tidybuilding")
-        return pd.DataFrame(columns=['zoning_id', 'allowed'])  # Return an empty DataFrame
+    # Extract units_xbed_minsize and units_xbed_maxsize from tidybuilding
+    min_size_dict = {int(col.split("_")[1][0]): float(tidybuilding[col].iloc[0])
+                     for col in tidybuilding.columns if col.startswith("units_") and col.endswith("_minsize")}
+    
+    max_size_dict = {int(col.split("_")[1][0]): float(tidybuilding[col].iloc[0])
+                     for col in tidybuilding.columns if col.startswith("units_") and col.endswith("_maxsize")}
 
-    # Iterate through each row in tidyzoning
+    if not min_size_dict or not max_size_dict:
+        return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note'])
+
+    # Iterate through tidyzoning
     for index, zoning_row in tidyzoning.iterrows():
-        zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T)  # ✅ Fix the issue of passing Series
+        structure_constraints = zoning_row['structure_constraints']
 
-        # If zoning_req is empty, consider it allowed
-        if zoning_req is None or zoning_req.empty:
-            results.append({'zoning_id': index, 'allowed': True})
+        if not isinstance(structure_constraints, dict):  # Ensure it is a dictionary
+            structure_constraints = {}
+
+        # Get unit_size constraints
+        unit_size_constraints = structure_constraints.get('unit_size', [])
+
+        if not unit_size_constraints:
+            results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
             continue
 
-        # Check if unit_size meets the zoning constraints
-        if 'unit_size' in zoning_req['spec_type'].values:
-            unit_size_row = zoning_req[zoning_req['spec_type'] == 'unit_size']  # Extract the specific row
-            min_unit_size = unit_size_row['min_value'].values[0]  # Extract value
-            max_unit_size = unit_size_row['max_value'].values[0]  # Extract value
+        allowed = True  # Default to allowed
+        constraint_min_note = None
+        constraint_max_note = None
 
-            # Handle NaN values
-            min_unit_size = 0 if pd.isna(min_unit_size) else min_unit_size  # Set a very small value if no value
-            max_unit_size = 1000000 if pd.isna(max_unit_size) else max_unit_size  # Set a very large value if no value
+        # Process zoning rules
+        for constraint in unit_size_constraints:
+            min_val_rules = constraint.get("min_val", [])
+            max_val_rules = constraint.get("max_val", [])
+            min_select_info = None
+            max_select_info = None
 
-            # Get the unit and convert
-            unit_column = unit_size_row['unit'].values[0]  # Extract the unit of the specific row
-            # Define the unit mapping
-            unit_mapping = {
-                "square feet": ureg('ft^2'),
-                "square meters": ureg('m^2'),
-                "acres": ureg('acre')
-            }
-            target_unit = unit_mapping.get(unit_column, ureg('ft^2'))  # Convert the unit of the specific row to a unit recognized by pint, default is ft^2 if no unit
-            # Ensure min/max_unit_size has the correct unit 'ft^2'
-            min_unit_size = ureg.Quantity(min_unit_size, target_unit).to('ft^2')
-            max_unit_size = ureg.Quantity(max_unit_size, target_unit).to('ft^2')
+            def evaluate_constraints(size_dict, rules, comparison_func):
+                """
+                Handle min_val and max_val constraints.
 
-            # Check the area range
-            allowed = min_size >= min_unit_size and max_size <= max_unit_size
-            results.append({'zoning_id': index, 'allowed': allowed})
-        else:
-            results.append({'zoning_id': index, 'allowed': True})  # If zoning has no constraints, default to True
+                :param size_dict: min_size_dict or max_size_dict
+                :param rules: min_val_rules or max_val_rules
+                :param comparison_func: lambda expression for comparing unit sizes
+                :return: (allowed status (True / False / "MAYBE"), constraint information select_info)
+                """
+                constraint_values = {}  # Ensure each bedroom only stores corresponding calculated values
+                select_info = None
 
-    # Return a DataFrame containing the results for all zoning_ids
+                def evaluate_expression(expression, context):
+                    """ Evaluate mathematical expression, e.g., '950 + 150 * (bedrooms - 2)' """
+                    try:
+                        return eval(str(expression), {}, context)
+                    except Exception:
+                        return None  # Return None if evaluation fails
+
+                # Method 1: Condition matching
+                if isinstance(rules, list):
+                    for num_bedrooms, size in size_dict.items():
+                        size = float(size)  # Ensure size is float
+                        for rule in rules:
+                            conditions = rule.get("conditions", [])
+                            expression = rule.get("expression", None)
+                            rule_select_info = rule.get("select_info", None)
+
+                            if expression is None:
+                                continue  # Skip if no data
+
+                            # Convert and evaluate expression
+                            context = {"bedrooms": num_bedrooms}
+                            if isinstance(expression, list):
+                                evaluated_values = [evaluate_expression(expr, context) for expr in expression]
+                            else:
+                                evaluated_values = [evaluate_expression(expression, context)]
+
+                            # Filter None values
+                            evaluated_values = [val for val in evaluated_values if val is not None]
+
+                            # Use eval() to parse conditions
+                            try:
+                                if any(eval(cond, {}, context) for cond in conditions) or not conditions:
+                                    constraint_values[num_bedrooms] = evaluated_values  # Only store corresponding num_bedrooms values
+                                    if rule_select_info:
+                                        select_info = rule_select_info
+                            except Exception:
+                                continue  # Skip if parsing fails
+
+                # Method 2: Direct expression
+                elif isinstance(rules, dict) and "expression" in rules:
+                    for num_bedrooms in size_dict.keys():
+                        evaluated_value = evaluate_expression(rules["expression"], {"bedrooms": num_bedrooms})
+                        if evaluated_value is not None:
+                            constraint_values[num_bedrooms] = [evaluated_value]
+
+                # Handle select logic
+                if not constraint_values:
+                    return True, select_info  # Default to allowed if no constraints
+
+                allowed_list = []
+                for num_bedrooms, values in constraint_values.items():
+                    if num_bedrooms in size_dict:
+                        building_size = size_dict[num_bedrooms]  # Only compare corresponding `bedrooms`
+                        checks = [comparison_func(building_size, v) for v in values]
+
+                        if "either" in rules:
+                            allowed_list.append(any(checks))  # Only one condition needs to be met
+                        elif "unique" in rules:
+                            if all(checks):
+                                allowed_list.append(True)
+                            elif not any(checks):
+                                allowed_list.append(False)
+                            else:
+                                allowed_list.append("MAYBE")
+                        else:
+                            allowed_list.append(all(checks))  # Default: all conditions need to be met
+
+                if "MAYBE" in allowed_list:
+                    return "MAYBE", select_info
+                return all(allowed_list), select_info
+
+            # Check minimum value
+            min_allowed, min_select_info = evaluate_constraints(min_size_dict, min_val_rules, lambda x, y: x >= y)
+
+            # Check maximum value
+            max_allowed, max_select_info = evaluate_constraints(max_size_dict, max_val_rules, lambda x, y: x <= y)
+
+            # Combine min and max results
+            if min_allowed == "MAYBE" or max_allowed == "MAYBE":
+                allowed = "MAYBE"
+            else:
+                allowed = min_allowed and max_allowed
+
+            # Store constraint notes
+            if min_select_info:
+                constraint_min_note = min_select_info
+            if max_select_info:
+                constraint_max_note = max_select_info
+
+        results.append({'zoning_id': index, 'allowed': allowed, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
+
     return pd.DataFrame(results)

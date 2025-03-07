@@ -32,6 +32,7 @@ def unify_tidybuilding(file_path):
     tidybuilding['net_fl_area'] = (unit_info['fl_area'] * unit_info['qty']).sum()
     tidybuilding['max_unit_size'] = unit_info['fl_area'].max()
     tidybuilding['min_unit_size'] = unit_info['fl_area'].min()
+    tidybuilding['mean_unit_size'] = unit_info['fl_area'].min()
     tidybuilding['total_bedrooms'] = (unit_info['bedrooms'] * unit_info['qty']).sum()
     tidybuilding['total_units'] = unit_info['qty'].sum()
     tidybuilding['footprint'] = building_info['width'] * building_info['depth']
@@ -47,6 +48,10 @@ def unify_tidybuilding(file_path):
     # Calculate unique bedrooms and their corresponding unit sizes
     for bed in unique_bedrooms:
         tidybuilding[f'units_{bed}bed_minsize'] = unit_info.loc[unit_info["bedrooms"] == bed, "fl_area"].min()
+
+    # Calculate unique bedrooms and their corresponding unit sizes
+    for bed in unique_bedrooms:
+        tidybuilding[f'units_{bed}bed_maxsize'] = unit_info.loc[unit_info["bedrooms"] == bed, "fl_area"].max()
 
     # Calculate the number of units per floor
     level_qty = unit_info.groupby("level")["qty"].sum()
