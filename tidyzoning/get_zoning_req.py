@@ -100,6 +100,7 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
             "lot_area": lot_area,
             # From tidybuilding
             "bedrooms": bedrooms, 
+            "total_bedrooms": total_bedrooms,
             "units_0bed": units_0bed,
             "units_1bed": units_1bed,
             "units_2bed": units_2bed,
