@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import geopandas as gpd
 from tidyzoning import find_district_idx
+from tidyzoning import check_land_use
 
 def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func):
     """
