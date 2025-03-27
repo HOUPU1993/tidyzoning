@@ -15,6 +15,7 @@ def generate_parcel_info(tidyparcel):
 
     for parcel_id, group in tidyparcel.groupby("parcel_id"):
         Prop_ID = group['Prop_ID'].iloc[0]
+        Parcel_label = group['parcel_label'].iloc[0]
 
         # Front and rear points
         front = group[group["side"] == "front"]
@@ -51,6 +52,7 @@ def generate_parcel_info(tidyparcel):
         records.append({
             "Prop_ID": Prop_ID,
             "parcel_id": parcel_id,
+            "Parcel_label": Parcel_label,
             "lot_width": lot_width,
             "lot_depth": lot_depth,
             "lot_area": lot_area
