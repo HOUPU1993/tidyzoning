@@ -32,8 +32,8 @@ def generate_parcel_info(tidyparcel):
             continue
 
         # Compute lot depth & angle
-        front_centroid = front.geometry.centroid.unary_union
-        rear_centroid = rear.geometry.centroid.unary_union
+        front_centroid = front.geometry.centroid.unary_union.centroid
+        rear_centroid = rear.geometry.centroid.unary_union.centroid
         lot_depth = front_centroid.distance(rear_centroid) * 3.28084 # convert m to ft
         angle = compute_angle(front_centroid, rear_centroid)
 
