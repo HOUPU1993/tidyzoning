@@ -93,4 +93,7 @@ def generate_parcel_info(tidyparcel,tidyzoning):
             "zoning_id": zoning_id
         })
 
-    return pd.DataFrame(records)
+    # Drop rows where any key value is missing, then reset index
+    df = pd.DataFrame(records)
+    df = df.dropna(subset=["lot_width", "lot_depth", "lot_area"]).reset_index(drop=True)
+    return df

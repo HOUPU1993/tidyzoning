@@ -1,7 +1,7 @@
 import geopandas as gpd
 from shapely.geometry import MultiPolygon
 
-def filtered_tidyparcel(tidyparcel_fp, tidyzoning_gdf, output_fp=None):
+def parcels_in_zoning(tidyparcel_fp, tidyzoning_gdf, output_fp=None):
     """
     Filters tidyparcel GeoDataFrame by checking if centroids fall within the zoning union.
     
