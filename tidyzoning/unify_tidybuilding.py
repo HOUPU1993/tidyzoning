@@ -2,8 +2,6 @@ import os
 import pandas as pd
 
 def unify_tidybuilding(file_path):
-    
-
 
     # Ensure file_path ends with the correct separator
     file_path = file_path.rstrip("/\\") + os.sep
