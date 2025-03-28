@@ -1,6 +1,11 @@
 import os
 import pandas as pd
 
+'''how to use: 
+file_path = r"C:\Users\Admin\Desktop\New folder (6)\tidybuilding\4_fam_wide/"
+tidybuilding_4_fam = unify_tidybuilding(file_path)'''
+
+
 def unify_tidybuilding(file_path):
     # Ensure file_path ends with the correct separator
     file_path = file_path.rstrip("/\\") + os.sep

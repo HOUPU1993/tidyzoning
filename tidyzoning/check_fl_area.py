@@ -28,6 +28,9 @@ def check_fl_area(tidybuilding, tidyzoning, tidyparcel=None):
           complies with the zoning regulations (True if compliant, False otherwise).
         - 'constraint_min_note': The constraint note for the minimum value.
         - 'constraint_max_note': The constraint note for the maximum value.
+    
+    How to use:
+    check_fl_area_result = check_fl_area(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     ureg = UnitRegistry()
     results = []

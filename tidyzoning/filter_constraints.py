@@ -1,5 +1,8 @@
 def filter_constraints(df, column, target_key):
-    """Recursively check if the specified column contains the target_key and filter the matching rows."""
+    """Recursively check if the specified column contains the target_key and filter the matching rows.
+    how to use: 
+    filter_constraints(tidyzoning,"lot_constraints","lot_size")"""
+    
     def contains_key(value, target_key):
         if isinstance(value, dict):
             return any(target_key in str(k).lower() or contains_key(v, target_key) for k, v in value.items())

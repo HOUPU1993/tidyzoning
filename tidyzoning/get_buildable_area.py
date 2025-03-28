@@ -17,6 +17,9 @@ def get_buildable_area(tidyparcel_with_setbacks):
     -------
     GeoDataFrame
         A GeoDataFrame with each parcel_id and its corresponding buildable geometry after applying setbacks.
+    
+    How to use:
+    tidyparcel_with_setbacks = add_setbacks(tidybuilding_2_fam,  tidyzoning.loc[[2]], tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     # Initialize unit registry for unit conversion
     ureg = UnitRegistry()

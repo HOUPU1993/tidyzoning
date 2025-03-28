@@ -12,6 +12,11 @@ def filtered_tidyparcel(tidyparcel_fp, tidyzoning_gdf, output_fp=None):
     
     Returns:
     - GeoDataFrame: Filtered tidyparcel GeoDataFrame.
+    
+    How to use:
+    tidyparcel_fp = r"C:\Users\Admin\Desktop\New folder (6)\Dallas_County_combined_parcel.geojson"
+    output_fp = r"C:\Users\Admin\Desktop\New folder (6)\tidyparcel_filtered.geojson"
+    filtered = filtered_tidyparcel(tidyparcel_fp, tidyzoning, output_fp=output_fp)
     """
     
     # Read and set CRS

@@ -30,6 +30,8 @@ def process_zoning_analysis(tidybuilding, tidyzoning, tidyparcel):
     """
     Process building and zoning analysis, including different check funtions to find the allowed parcels based on certain building type,
     and utilizing add_setbacks(), get buildable area() to get the selected buildable area, and check footprint() is to check the fitted tidybuilding in the certain tidyparcel.
+    How to use:
+    final_results_2_fam = process_zoning_analysis(tidybuilding_2_fam, tidyzoning, tidyparcel)
     """
 
     '''the general check functions'''

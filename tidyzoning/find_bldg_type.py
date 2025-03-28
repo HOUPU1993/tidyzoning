@@ -9,6 +9,9 @@ def find_bldg_type(tidybuilding):
 
     Returns:
         str: The building type as stored in the 'type' column.
+        
+    How to use:
+    find_bldg_type_results = find_bldg_type(tidybuilding_4_fam)
     """
     if "type" in tidybuilding.columns:
         return tidybuilding["type"].iloc[0]  # Assuming only one building per DataFrame

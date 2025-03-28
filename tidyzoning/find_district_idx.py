@@ -14,6 +14,8 @@ def find_district_idx(tidyparcel, tidyzoning):
                     Prop_ID and Pacel_id are from Tidyparcel
                     tidyzoning_index are from Tidyzoning
                     (Prop_ID, parcel_id, tidyzoning_index) if a match is found, or (Prop_ID, parcel_id, None) if no match is found.
+    How to use:
+    find_district_idx_results = find_district_idx(tidyparcel, tidyzoning)
     """
     # Filter rows with centroids
     centroid_rows = tidyparcel[tidyparcel['side'] == 'centroid']

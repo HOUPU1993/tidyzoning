@@ -21,6 +21,9 @@ def check_stories(tidybuilding, tidyzoning, tidyparcel=None):
         - 'allowed': A boolean value indicating whether the building's stories 
         - 'constraint_min_note': The constraint note for the minimum value.
         - 'constraint_max_note': The constraint note for the maximum value.
+    
+    How to use:
+    check_stories_result = check_stories(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     results = []
 

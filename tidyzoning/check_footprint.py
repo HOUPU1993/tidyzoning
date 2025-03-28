@@ -9,6 +9,8 @@ import math
 import numba
 from tqdm import tqdm
 
+'''how to use: check_footprint_results = check_footprint(get_buildable_area_result, tidybuilding_2_fam)'''
+
 # numba really does help here, 32us -> ~1us.
 @numba.jit(nopython=True)
 def fits(mask, width, depth):

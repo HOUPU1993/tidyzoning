@@ -27,6 +27,9 @@ def check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel=None):
         - 'allowed': A boolean value indicating whether the building's FAR 
         - 'constraint_min_note': The constraint note for the minimum value.
         - 'constraint_max_note': The constraint note for the maximum value.
+        
+    How to use:
+    check_unit_size_result = check_unit_size(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
 
     results = []

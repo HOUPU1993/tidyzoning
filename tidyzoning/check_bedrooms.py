@@ -21,6 +21,9 @@ def check_bedrooms(tidybuilding, tidyzoning, tidyparcel=None):
         - 'allowed': A boolean value indicating whether the building's bedrooms 
         - 'constraint_min_note': The constraint note for the minimum value.
         - 'constraint_max_note': The constraint note for the maximum value.
+        
+    How to use:
+    check_bedrooms_result = check_bedrooms(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     results = []
     # Check the data from the tidybuilding

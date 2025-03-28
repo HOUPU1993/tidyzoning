@@ -11,6 +11,9 @@ def check_land_use(tidybuilding, tidyzoning):
 
     Returns:
         pd.DataFrame: A DataFrame with the 'allowed' column indicating if the building is allowed and corresponding tidyzoning idex.
+        
+    How to use: 
+    check_land_use_results = check_land_use(tidybuilding_4_fam, tidyzoning)
     """
     def check_land_use_single(dist_info, bldg_type):
         # Extract uses_permitted from dist_info dictionary

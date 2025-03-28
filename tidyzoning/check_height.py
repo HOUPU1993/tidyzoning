@@ -23,6 +23,9 @@ def check_height(tidybuilding, tidyzoning, tidyparcel=None):
         - 'allowed': A boolean value indicating whether the building's Height
         - 'constraint_min_note': The constraint note for the minimum value.
         - 'constraint_max_note': The constraint note for the maximum value.
+        
+    How to use:
+    check_height_result = check_height(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     ureg = UnitRegistry()
     results = []

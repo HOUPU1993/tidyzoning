@@ -12,6 +12,7 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
     :param tidyzoning: Zoning data (DataFrame)
     :param tidyparcel: Parcel data (GeoDataFrame), optional
     :return: DataFrame containing all calculated results
+    :How to use: get_zoning_req_results = get_zoning_req(tidybuilding_4_fam, tidyzoning.loc[[2]], tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     def zoning_extract(tidybuilding, tidyzoning, tidyparcel=None):
         columns_to_extract = ['structure_constraints', 'other_constraints', 'lot_constraints']
@@ -35,35 +36,11 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         district_constraints = pd.DataFrame(extracted_data)
 
         # If no parcel data is provided
-        lot_width, lot_depth, lot_area = None, None, None
-        if tidyparcel is not None:
-            results = []
-            for parcel_id, group in tidyparcel.groupby('parcel_id'):
-                front_of_parcel = group[group['side'] == "front"]
-                side_of_parcel = group[group['side'] == "Interior side"]
-                parcel_without_centroid = group[(group['side'].notna()) & (group['side'] != "centroid")]
-
-                lot_width = front_of_parcel.geometry.length.sum() * 3.28084
-                lot_depth = side_of_parcel.geometry.length.sum() * 3.28084
-                polygons = polygonize(unary_union(parcel_without_centroid.geometry))
-                lot_polygon = unary_union(polygons)
-                lot_area = lot_polygon.area * 10.7639
-                results.append({"parcel_id": parcel_id, "lot_width": lot_width, "lot_depth": lot_depth, "lot_area": lot_area})
-
-            parcel_results = pd.DataFrame(results)
-            lot_width = parcel_results["lot_width"].iloc[0] if not parcel_results.empty else None
-            lot_depth = parcel_results["lot_depth"].iloc[0] if not parcel_results.empty else None
-            lot_area = parcel_results["lot_area"].iloc[0] if not parcel_results.empty else None
+        lot_width = tidyparcel["lot_width"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
+        lot_depth = tidyparcel["lot_depth"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
+        lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
 
         # Check the data from the tidybuilding
-        bed_list = {
-            'units_0bed': 0,
-            'units_1bed': 1,
-            'units_2bed': 2,
-            'units_3bed': 3,
-            'units_4bed': 4
-        }
-        
         bedrooms = None
         total_bedrooms = tidybuilding.get('total_bedrooms', [None])[0]
         units_0bed = tidybuilding['units_0bed'].sum() if 'units_0bed' in tidybuilding.columns else 0

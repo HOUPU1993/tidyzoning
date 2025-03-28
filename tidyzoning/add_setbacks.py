@@ -19,6 +19,9 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel):
     -------
     DataFrame
         Add two columns in tidyparcel geodataframe: setback & units
+        
+    How to use:
+    add_setbacks_results = add_setbacks(tidybuilding_4_fam, tidyzoning.loc[[2]], tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     
     # filter centriod and nan value in side column
