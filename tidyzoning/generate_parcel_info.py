@@ -24,7 +24,7 @@ def generate_parcel_info(tidyparcel,tidyzoning):
         - lot_width, lot_depth, lot_area
         - zoning_id (index of tidyzoning that contains centroid of parcel)
     
-    '''how to use:
+    how to use:
     tidyparcel = generate_parcel_info(filtered_tidyparcel,tidyzoning)
     """
     
