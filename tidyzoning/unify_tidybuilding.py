@@ -3,7 +3,8 @@ import pandas as pd
 
 '''how to use: 
 file_path = r"C:\Users\Admin\Desktop\New folder (6)\tidybuilding\4_fam_wide/"
-tidybuilding_4_fam = unify_tidybuilding(file_path)'''
+tidybuilding_4_fam = unify_tidybuilding(file_path)
+'''
 
 
 def unify_tidybuilding(file_path):
