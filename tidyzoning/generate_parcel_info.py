@@ -58,7 +58,7 @@ def generate_parcel_info(tidyparcel,tidyzoning):
             records.append({
                 "Prop_ID": Prop_ID,
                 "parcel_id": parcel_id,
-                "Parcel_label": Parcel_label
+                "Parcel_label": Parcel_label,
                 "lot_depth": None,
                 "lot_width": None,
                 "lot_area": None,
