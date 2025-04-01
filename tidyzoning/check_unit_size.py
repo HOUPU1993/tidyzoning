@@ -133,31 +133,10 @@ def check_unit_size_fun(tidybuilding, tidyzoning, tidyparcel=None):
     results = []
     bldg_type = find_bldg_type(tidybuilding)
 
-    # Calculate parcel information
-    lot_width, lot_depth, lot_area = None, None, None
-    if tidyparcel is not None:
-        parcel_results = []
-        for parcel_id, group in tidyparcel.groupby('parcel_id'):
-            front_of_parcel = group[group['side'] == "front"]
-            side_of_parcel = group[group['side'] == "Interior side"]
-            parcel_without_centroid = group[(group['side'].notna()) & (group['side'] != "centroid")]
-
-            lot_width = front_of_parcel.geometry.length.sum() * 3.28084
-            lot_depth = side_of_parcel.geometry.length.sum() * 3.28084
-            polygons = polygonize(unary_union(parcel_without_centroid.geometry))
-            lot_polygon = unary_union(list(polygons))
-            lot_area = lot_polygon.area * 10.7639
-            parcel_results.append({
-                "parcel_id": parcel_id,
-                "lot_width": lot_width,
-                "lot_depth": lot_depth,
-                "lot_area": lot_area
-            })
-
-        parcel_results = pd.DataFrame(parcel_results)
-        lot_width = parcel_results["lot_width"].iloc[0] if not parcel_results.empty else None
-        lot_depth = parcel_results["lot_depth"].iloc[0] if not parcel_results.empty else None
-        lot_area = parcel_results["lot_area"].iloc[0] if not parcel_results.empty else None
+    # If no parcel data is provided
+    lot_width = tidyparcel["lot_width"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
+    lot_depth = tidyparcel["lot_depth"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
+    lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
 
     # Build context
     context = {
