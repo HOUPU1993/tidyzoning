@@ -344,6 +344,11 @@ def check_unit_size(tidybuilding, tidyzoning, tidyparcel=None):
     
     # Step 1: Run check_unit_size_avg
     check_unit_size_avg_result = check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel)
+    
+    # Ensure required columns exist
+    for col in ["constraint_min_note", "constraint_max_note"]:
+        if col not in check_unit_size_avg_result.columns:
+            check_unit_size_avg_result[col] = None
 
     # Step 2: Get `zoning_id` where `allowed` is True or MAYBE
     valid_zoning_ids = check_unit_size_avg_result[
@@ -355,6 +360,11 @@ def check_unit_size(tidybuilding, tidyzoning, tidyparcel=None):
 
     # Step 4: Run check_unit_size
     check_unit_size_result = check_unit_size_fun(tidybuilding, filtered_tidyzoning, tidyparcel)
+
+    # Ensure required columns exist
+    for col in ["constraint_min_note", "constraint_max_note"]:
+        if col not in check_unit_size_result.columns:
+            check_unit_size_result[col] = None
 
     # Step 5: Merge the two results, ensuring all zoning_id are recorded
     merged_result = pd.merge(
