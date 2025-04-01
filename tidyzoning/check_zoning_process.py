@@ -3,6 +3,7 @@ import numpy as np
 import geopandas as gpd
 from tidyzoning import find_district_idx
 from tidyzoning import check_land_use
+from tqdm import tqdm
 
 def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func):
     """
@@ -29,7 +30,7 @@ def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func):
     
     # Step 2: Compute the different check functions
     all_results = []
-    for _, row in tidyparcel():
+    for _, row in tqdm(tidyparcel.iterrows(), total=tidyparcel.shape[0], desc="Processing Parcels"):
         prop_id = row['Prop_ID']
         parcel_id = row['parcel_id']
         zoning_idx = row['zoning_id']
