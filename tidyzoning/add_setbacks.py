@@ -5,73 +5,59 @@ import geopandas as gpd
 from shapely.ops import unary_union, polygonize
 from tidyzoning import get_zoning_req
 
-def add_setbacks(tidybuilding, tidyzoning, tidyparcel):
+def add_setbacks(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel):
     """
-    Add setbacks to each tidyparcel based on tidyzoning requirement.
+    Add setbacks to each confident_tidyparcel based on tidyzoning requirements.
 
     Parameters:
     ----------
-    tidybuilding : A GeoDataFrame containing information about a single building. 
-    tidyparcel : A GeoDataFrame containing information about the tidyparcels(single/multiple ). 
-    tidyzoning : A GeoDataFrame containing zoning constraints. It may have multiple rows,
+    tidybuilding : GeoDataFrame with a single building.
+    tidyzoning : GeoDataFrame with one or more zoning constraints.
+    tidyparcel : GeoDataFrame with one or more parcel rows.
+    confident_tidyparcel : GeoDataFrame with parcel sides.
 
     Returns:
     -------
-    DataFrame
-        Add two columns in tidyparcel geodataframe: setback & units
-        
-    How to use:
-    add_setbacks_results = add_setbacks(tidybuilding_4_fam, tidyzoning.loc[[2]], tidyparcel[tidyparcel['parcel_id'] == '10'])
+    GeoDataFrame with two new columns: 'setback' and 'unit'
     """
-    
-    # filter centriod and nan value in side column
-    tidyparcel = tidyparcel[(tidyparcel['side'].notna()) & (tidyparcel['side'] != 'centroid')].copy()
-    # Initialize columns for setbacks and units
-    tidyparcel['setback'] = None
-    tidyparcel['unit'] = None
 
-    
-    # mapping the side classification name
+    # Extract IDs to filter
+    prop_id = tidyparcel.iloc[0]["Prop_ID"]
+    parcel_id = tidyparcel.iloc[0]["parcel_id"]
+
+    # Filter for matching parcel and clean sides
+    confident_tidyparcel = confident_tidyparcel[
+        (confident_tidyparcel["Prop_ID"] == prop_id) &
+        (confident_tidyparcel["parcel_id"] == parcel_id) &
+        (confident_tidyparcel["side"].notna()) &
+        (confident_tidyparcel["side"] != "centroid")
+    ].copy()
+
+    # Initialize columns
+    confident_tidyparcel["setback"] = None
+    confident_tidyparcel["unit"] = None
+
+    # Mapping from side label to zoning spec_type
     name_key = {
-        'front': 'setback_front',
-        'Interior side': 'setback_side_int',
-        'Exterior side': 'setback_side_ext',
-        'rear': 'setback_rear'
+        "front": "setback_front",
+        "Interior side": "setback_side_int",
+        "Exterior side": "setback_side_ext",
+        "rear": "setback_rear"
     }
-    
-    # Calculate FAR for each parcel_id
-    for parcel_id, group in tidyparcel.groupby("parcel_id"):
-        # Iterate through each row in tidyzoning
-        for index, zoning_row in tidyzoning.iterrows():
-            zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)  # ✅ Fix the issue of passing Series
 
-            # If no zoning constraints exist, leave setbacks and units as None
-            if zoning_req is None or zoning_req.empty:
-                continue
+    # Loop through zoning rows
+    for _, zoning_row in tidyzoning.iterrows():
+        zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)
+        if zoning_req is None or zoning_req.empty:
+            continue
 
-            setbacks = []
-            units = []
-            
-            for _, row in group.iterrows():
-                side_type = row['side']
-                
-                if side_type in name_key:
-                    filtered_constraints = zoning_req[zoning_req['spec_type'] == name_key[side_type]]
-                    
-                    if not filtered_constraints.empty:
-                        setback_value = filtered_constraints.iloc[0]['min_value']
-                        unit_value = filtered_constraints.iloc[0]['unit']
-                    else:
-                        setback_value = None
-                        unit_value = None
-                else:
-                    setback_value = None
-                    unit_value = None
-                
-                setbacks.append(setback_value)
-                units.append(unit_value)
-            
-            tidyparcel.loc[group.index, 'setback'] = setbacks
-            tidyparcel.loc[group.index, 'unit'] = units
-    
-    return tidyparcel
+        # Apply setbacks per side
+        for idx, row in confident_tidyparcel.iterrows():
+            side_type = row["side"]
+            if side_type in name_key:
+                filtered_constraints = zoning_req[zoning_req["spec_type"] == name_key[side_type]]
+                if not filtered_constraints.empty:
+                    confident_tidyparcel.at[idx, "setback"] = filtered_constraints.iloc[0]["min_value"]
+                    confident_tidyparcel.at[idx, "unit"] = filtered_constraints.iloc[0]["unit"]
+
+    return confident_tidyparcel
