@@ -25,16 +25,19 @@ def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func):
     check_land_use_results = check_land_use(tidybuilding, tidyzoning)
     allowed_zoning_ids = check_land_use_results[check_land_use_results['allowed'] == True]['zoning_id'].unique()
     
-    # Filter tidyzoning based on allowed zoning IDs
+    # Step 2: Filter tidyzoning based on allowed zoning IDs
     tidyzoning_filtered = tidyzoning[tidyzoning.index.isin(allowed_zoning_ids)]
     
+    # Step 3: Filter tidyparcel based on allowed zoning IDs
+    tidyparcel_filtered = tidyparcel[tidyparcel['zoning_id'].isin(tidyzoning_filtered.index)]
+
     # Step 2: Compute the different check functions
     all_results = []
-    for _, row in tqdm(tidyparcel.iterrows(), total=tidyparcel.shape[0], desc="Processing Parcels"):
+    for _, row in tqdm(tidyparcel_filtered.iterrows(), total=tidyparcel_filtered.shape[0], desc="Processing Parcels"):
         prop_id = row['Prop_ID']
         parcel_id = row['parcel_id']
         zoning_idx = row['zoning_id']
-        filtered_tidyparcel = tidyparcel[(tidyparcel['parcel_id'] == parcel_id) & (tidyparcel['Prop_ID'] == prop_id)]
+        filtered_tidyparcel = tidyparcel_filtered[(tidyparcel_filtered['parcel_id'] == parcel_id) & (tidyparcel_filtered['Prop_ID'] == prop_id)]
         filtered_tidyzoning = tidyzoning_filtered.loc[[zoning_idx]]
         results = check_func(tidybuilding, filtered_tidyzoning, filtered_tidyparcel)
         results["parcel_id"] = parcel_id  
