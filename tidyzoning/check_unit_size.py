@@ -368,6 +368,14 @@ def check_unit_size(tidybuilding, tidyzoning, tidyparcel=None):
         if col not in check_unit_size_result.columns:
             check_unit_size_result[col] = None
 
+    # 🛡️ Step 4.5: Ensure both DataFrames have required columns before merging
+    required_cols = ["zoning_id", "allowed", "constraint_min_note", "constraint_max_note"]
+    for name, df in zip(["check_unit_size_avg_result", "check_unit_size_result"],
+                        [check_unit_size_avg_result, check_unit_size_result]):
+        for col in required_cols:
+            if col not in df.columns:
+                df[col] = pd.Series(dtype=object)
+
     # Step 5: Merge the two results, ensuring all zoning_id are recorded
     merged_result = pd.merge(
         check_unit_size_avg_result, 
