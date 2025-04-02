@@ -236,6 +236,8 @@ def check_unit_size_fun(tidybuilding, tidyzoning, tidyparcel=None):
                     size = float(size)
                     for rule in rules:
                         conditions = rule.get("conditions", [])
+                        if isinstance(conditions, str):
+                            conditions = [conditions]
                         expression = rule.get("expression", None)
                         expressions = rule.get("expressions", None)
                         rule_select_info = rule.get("select_info", None)

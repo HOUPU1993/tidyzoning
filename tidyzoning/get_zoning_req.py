@@ -125,6 +125,8 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         
         for rule in rules:
             conditions = rule.get("conditions", [])  # List: [{condition_1, expression_1},{condition_2, expression_2}]
+            if isinstance(conditions, str):
+                conditions = [conditions]
             expression = rule.get("expression", None)  # Single string: {'expression': '30'}
             expressions_list = rule.get("expressions", [])  # List: [{'expression_1': '10'}.{'expression_2': '20'}.select:"min"]
             logical_operator = rule.get("logical_operator", None)  # Single string: [And/Or]
