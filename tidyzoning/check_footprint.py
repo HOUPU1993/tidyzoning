@@ -9,8 +9,6 @@ import math
 import numba
 from tqdm import tqdm
 
-'''how to use: check_footprint_results = check_footprint(get_buildable_area_result, tidybuilding_2_fam)'''
-
 # numba really does help here, 32us -> ~1us.
 @numba.jit(nopython=True)
 def fits(mask, width, depth):
@@ -18,8 +16,8 @@ def fits(mask, width, depth):
     This function checks whether a rectangle of width x depth can fit inside the rasterized polygon described by
     mask.
     '''
-    for x in range(mask.shape[0]):  # the number of the row = the depth of the mask
-        for y in range(mask.shape[1]):  # the number of the column = the width of the mask
+    for x in range(mask.shape[0]):  # the number of rows = the depth of the mask
+        for y in range(mask.shape[1]):  # the number of columns = the width of the mask
             if mask[x, y]:  # choose the raster point = True
                 if ((x + width) <= mask.shape[0] and (y + depth) <= mask.shape[1]
                         and np.all(mask[x:x + width, y:y + depth])):
@@ -42,8 +40,6 @@ def rect_fit(geom, dims):
     s = math.floor(s)
     n = math.ceil(n)
     e = math.ceil(e)
-    assert (e - w) % 1 == 0
-    assert (s - n) % 1 == 0
     width = int(round(e - w))
     depth = int(round(n - s))
     xform = rasterio.transform.from_bounds(w, s, e, n, width, depth)
@@ -73,32 +69,65 @@ def rot_fit(geom, dims, rotations_deg=np.arange(0, 90, 15)):
 
 def check_footprint(tidyparcel_gdf, tidybuilding):
     '''
-    Function to check if buildings fit within parcels.
+    Function to check if buildings fit within parcels using both strict and relaxable buildable areas.
+
+    For each parcel, the function first tests if the building (given by its dimensions in tidybuilding)
+    fits within the strict buildable area ('buildable_geometry_strict'). If it does, the result is True.
+    If not, it then tests the relaxable buildable area ('buildable_geometry_relaxable'):
+      - If the building fits in the relaxable area, allowed is set to "MAYBE"
+      - Otherwise, allowed is False.
 
     Parameters:
-        tidyparcel_gdf (GeoDataFrame): GeoDataFrame containing parcel geometries.
-        tidybuilding (DataFrame): DataFrame containing building dimensions (width, depth).
+        tidyparcel_gdf (GeoDataFrame): GeoDataFrame containing parcel geometries with columns 
+                                       'buildable_geometry_strict' and 'buildable_geometry_relaxable'.
+        tidybuilding (DataFrame): DataFrame containing building dimensions (with columns 'width', 'depth').
 
     Returns:
-        DataFrame: Results of whether buildings fit within parcels.
+        DataFrame: Results with columns ['Prop_ID', 'parcel_id', 'allowed'].
+                 'allowed' is True if the building fits strictly, "MAYBE" if it only fits relaxably,
+                 and False if it does not fit.
     '''
     results = []
 
     for _, parcel in tqdm(tidyparcel_gdf.iterrows(), total=len(tidyparcel_gdf), desc="Processing Parcels"):
-        parcel_geom = parcel['buildable_geometry']
-        if parcel_geom is None or shapely.geometry.shape(parcel_geom).is_empty:
-            continue  # Skip empty parcels
-
-        parcel_results = []
+        # Get strict and relaxable geometries from the parcel
+        strict_geom = parcel['buildable_geometry_strict']
+        relaxable_geom = parcel['buildable_geometry_relaxable']
+        
+        # Skip parcels with no valid geometry in both cases.
+        if ((strict_geom is None or strict_geom.is_empty) and 
+            (relaxable_geom is None or relaxable_geom.is_empty)):
+            continue
+        
+        allowed_result = False  # default allowed is False
+        
+        # Loop through each building dimension (assumes tidybuilding has one or more rows)
         for _, building in tidybuilding.iterrows():
-            building_dims = [(building['width'], building['depth'])]
-            fit_results = rot_fit(parcel_geom, building_dims)
-            parcel_results.append(fit_results[0])  # Store whether the building fits
+            dims = [(building['width'], building['depth'])]
+            
+            # First, check the strict buildable area
+            if strict_geom is not None and not strict_geom.is_empty:
+                strict_fit = rot_fit(strict_geom, dims)[0]
+            else:
+                strict_fit = False
+            
+            if strict_fit:
+                allowed_result = True
+                # If any building fits strictly, we consider the parcel allowed.
+                break
+            
+            # If not strictly allowed, check the relaxable buildable area
+            if relaxable_geom is not None and not relaxable_geom.is_empty:
+                relaxable_fit = rot_fit(relaxable_geom, dims)[0]
+            else:
+                relaxable_fit = False
+            
+            if relaxable_fit:
+                allowed_result = "MAYBE"
+                # Optionally, you could break here if one "MAYBE" is sufficient.
+                break
+        
+        results.append([parcel['Prop_ID'], parcel['parcel_id'], allowed_result])
 
-        results.append([parcel['Prop_ID'], parcel['parcel_id'], *parcel_results])
-
-    # Convert the results to a DataFrame
-    result_columns = ['Prop_ID', 'parcel_id','allowed']
-
-    result_df = pd.DataFrame(results, columns=result_columns)
+    result_df = pd.DataFrame(results, columns=['Prop_ID', 'parcel_id', 'allowed'])
     return result_df

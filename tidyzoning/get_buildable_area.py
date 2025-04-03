@@ -7,68 +7,119 @@ from pint import UnitRegistry
 def get_buildable_area(tidyparcel_with_setbacks):
     """
     Calculates the buildable area for parcels considering setbacks.
-
+    
+    This updated function supports rows where the 'setback' column may contain multiple values (e.g., [20,15]).
+    For each row it extracts the minimum and maximum setback values, converts them to meters, and creates two
+    buffered geometries. Then, for each parcel (grouped by parcel_id), it computes:
+    
+      - The relaxable region: the difference between the parcel geometry and the union of all minimum setback buffers.
+      - The strict region: the difference between the parcel geometry and the union of all maximum setback buffers.
+      
     Parameters:
-    ----------
-    tidyparcel_with_setbacks : GeoDataFrame with single or multiple parcels
+    -----------
+    tidyparcel_with_setbacks : GeoDataFrame
         A GeoDataFrame containing parcel geometries along with their associated setback values and units.
-
+        The 'setback' column may contain a single numeric value or a list of numeric values.
+    
     Returns:
-    -------
+    --------
     GeoDataFrame
-        A GeoDataFrame with each parcel_id and its corresponding buildable geometry after applying setbacks.
+        A GeoDataFrame with each parcel_id and its corresponding buildable geometries:
+          - buildable_geometry_relaxable: Region after applying the minimum setback buffer.
+          - buildable_geometry_strict: Region after applying the maximum setback buffer.
     
     How to use:
-    tidyparcel_with_setbacks = add_setbacks(tidybuilding_2_fam,  tidyzoning.loc[[2]], tidyparcel[tidyparcel['parcel_id'] == '10'])
+    -----------
+    tidyparcel_with_setbacks = add_setbacks(tidybuilding_2_fam, tidyzoning.loc[[2]], 
+                                              tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     # Initialize unit registry for unit conversion
     ureg = UnitRegistry()
-    # Used to store the final results
     buildable_results = []
-    
-    # Iterate through each parcel_id
+
+    # Function to convert a single setback value to meters
+    def convert_to_meters(value, unit):
+        if pd.notna(value) and pd.notna(unit):
+            try:
+                return value * ureg(unit).to('meters').magnitude
+            except Exception:
+                return value  # if conversion fails, return the original value
+        return 0.0001  # fallback small buffer value if value/unit is missing
+
+    # Process each parcel (grouped by parcel_id)
     for parcel_id, group in tidyparcel_with_setbacks.groupby("parcel_id"):
         group = group.copy()
+        # Combine the parcel geometries (assumed to form a contiguous parcel)
         polygons = list(polygonize(group.geometry))
         parcel_geometry = unary_union(polygons)
         prop_id = group["Prop_ID"].iloc[0] if "Prop_ID" in group.columns else None
-        
-        # If no setback values exist, return the polygonized geometry
+
+        # If all setback values are missing, return the parcel geometry as both buildable areas.
         if group['setback'].isna().all():
-            buildable_results.append({'Prop_ID': prop_id, 'parcel_id': parcel_id, 'buildable_geometry': parcel_geometry})
+            buildable_results.append({
+                'Prop_ID': prop_id,
+                'parcel_id': parcel_id,
+                'buildable_geometry_relaxable': parcel_geometry,
+                'buildable_geometry_strict': parcel_geometry
+            })
             continue
 
-        # Convert setback units to meters
-        def convert_to_meters(setback, unit):
-            if pd.notna(setback) and pd.notna(unit):
-                try:
-                    return setback * ureg(unit).to('meters').magnitude
-                except:
-                    return setback  # If unit conversion fails, keep original value
-            return 0.0001
-        
-        group['setback_m'] = group.apply(lambda row: convert_to_meters(row['setback'], row['unit']), axis=1)
-        # Apply buffer to each geometry based on individual setback value
-        group['buffered_geometry'] = group.apply(
-            lambda row: row.geometry.buffer(row.setback_m, resolution=1) if pd.notna(row.setback_m) else row.geometry,
-            axis=1
-        )
+        # For each row, determine min and max setback values (whether single value or list) and create buffers.
+        def process_row(row):
+            sb = row['setback']
+            unit = row['unit']
+            # If setback is a list, extract min and max; otherwise, use the single value for both.
+            if isinstance(sb, list):
+                min_sb = min(sb) if len(sb) > 0 else None
+                max_sb = max(sb) if len(sb) > 0 else None
+            else:
+                min_sb = sb
+                max_sb = sb
+            # Convert setbacks to meters
+            min_sb_m = convert_to_meters(min_sb, unit) if min_sb is not None else 0.0001
+            max_sb_m = convert_to_meters(max_sb, unit) if max_sb is not None else 0.0001
+            # Create buffered geometries for min and max setback
+            buffered_min = row.geometry.buffer(min_sb_m, resolution=1) if pd.notna(min_sb_m) else row.geometry
+            buffered_max = row.geometry.buffer(max_sb_m, resolution=1) if pd.notna(max_sb_m) else row.geometry
+            return pd.Series({'buffered_geometry_min': buffered_min, 'buffered_geometry_max': buffered_max})
 
-        # Create a union buffered polygons for each group
-        unioned_geometry = unary_union(group['buffered_geometry'])
-        # calculate the difference
-        buildable_geom = parcel_geometry.difference(unioned_geometry)
+        buffers = group.apply(process_row, axis=1)
+        group = pd.concat([group, buffers], axis=1)
 
-        if not buildable_geom.is_valid:
-            buildable_geom = make_valid(buildable_geom)
-        if buildable_geom.is_empty:
-            buildable_geom = None
-        elif buildable_geom.geom_type == 'MultiPolygon':
-            buildable_geom = max(buildable_geom.geoms, key=lambda g: g.area)  
+        # Create union of all minimum and maximum buffered geometries for the group
+        unioned_buffered_min = unary_union(group['buffered_geometry_min'])
+        unioned_buffered_max = unary_union(group['buffered_geometry_max'])
 
-        buildable_results.append({'Prop_ID': prop_id, 'parcel_id': parcel_id, 'buildable_geometry': buildable_geom})
+        # Calculate the buildable areas by subtracting the setbacks buffers from the original parcel geometry
+        buildable_geom_min = parcel_geometry.difference(unioned_buffered_min)
+        buildable_geom_max = parcel_geometry.difference(unioned_buffered_max)
 
-    # transfer into geodataframe
-    buildable_gdf = gpd.GeoDataFrame(buildable_results, geometry='buildable_geometry', crs='EPSG:3857').dropna(subset=['buildable_geometry'])
+        # Validate and fix geometries if needed
+        if not buildable_geom_min.is_valid:
+            buildable_geom_min = make_valid(buildable_geom_min)
+        if not buildable_geom_max.is_valid:
+            buildable_geom_max = make_valid(buildable_geom_max)
+
+        if buildable_geom_min.is_empty:
+            buildable_geom_min = None
+        elif buildable_geom_min.geom_type == 'MultiPolygon':
+            buildable_geom_min = max(buildable_geom_min.geoms, key=lambda g: g.area)
+
+        if buildable_geom_max.is_empty:
+            buildable_geom_max = None
+        elif buildable_geom_max.geom_type == 'MultiPolygon':
+            buildable_geom_max = max(buildable_geom_max.geoms, key=lambda g: g.area)
+
+        buildable_results.append({
+            'Prop_ID': prop_id,
+            'parcel_id': parcel_id,
+            'buildable_geometry_relaxable': buildable_geom_min,
+            'buildable_geometry_strict': buildable_geom_max
+        })
+
+    # Convert results into a GeoDataFrame.
+    # Note: one of the geometries is set as the active geometry, while the other is stored as an attribute.
+    buildable_gdf = gpd.GeoDataFrame(buildable_results, geometry='buildable_geometry_strict', crs='EPSG:3857')
+    buildable_gdf = buildable_gdf.dropna(subset=['buildable_geometry_relaxable', 'buildable_geometry_strict'])
 
     return buildable_gdf
