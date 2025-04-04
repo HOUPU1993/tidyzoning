@@ -38,12 +38,27 @@ def get_buildable_area(tidyparcel_with_setbacks):
     buildable_results = []
 
     # Function to convert a single setback value to meters
+    # def convert_to_meters(value, unit):
+    #     if pd.notna(value) and pd.notna(unit):
+    #         try:
+    #             return value * ureg(unit).to('meters').magnitude
+    #         except Exception:
+    #             return value  # if conversion fails, return the original value
+    #     return 0.0001  # fallback small buffer value if value/unit is missing
+
+    # Function to convert a single setback value to meters
     def convert_to_meters(value, unit):
-        if pd.notna(value) and pd.notna(unit):
+        try:
+            # Try to convert value to a floating point number to make sure it's a single scalar
+            scalar_value = float(value)
+        except Exception:
+            return 0.0001
+
+        if pd.notna(scalar_value) and pd.notna(unit):
             try:
-                return value * ureg(unit).to('meters').magnitude
+                return scalar_value * ureg(unit).to('meters').magnitude
             except Exception:
-                return value  # if conversion fails, return the original value
+                return 0.0001  # # if conversion fails, return the 0.001
         return 0.0001  # fallback small buffer value if value/unit is missing
 
     # Process each parcel (grouped by parcel_id)
