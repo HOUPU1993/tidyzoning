@@ -1,7 +1,7 @@
 import pandas as pd
 from tidyzoning import find_bldg_type
 
-def check_land_use(tidybuilding, tidyzoning):
+def check_land_use(tidybuilding, tidyzoning, tidyparcel=None):
     """
     Checks if the tidybuilding is allowed in each row of tidyzoning DataFrame based on land use.
 
