@@ -125,6 +125,22 @@ def get_buildable_area(tidyparcel_with_setbacks):
         elif buildable_geom_max.geom_type == 'MultiPolygon':
             buildable_geom_max = max(buildable_geom_max.geoms, key=lambda g: g.area)
 
+        # Case for some mistakes
+        if buildable_geom_min is None and buildable_geom_max is not None:
+            buildable_geom_min = buildable_geom_max
+        elif buildable_geom_max is None and buildable_geom_min is not None:
+            buildable_geom_max = buildable_geom_min
+        elif buildable_geom_min is None and buildable_geom_max is None:
+            try:
+                fallback_polygon = parcel_geometry
+                if fallback_polygon is None or fallback_polygon.is_empty:
+                    raise ValueError("Fallback polygon invalid")
+                buildable_geom_min = fallback_polygon
+                buildable_geom_max = fallback_polygon
+            except Exception:
+                buildable_geom_min = "error"
+                buildable_geom_max = "error"
+
         buildable_results.append({
             'Prop_ID': prop_id,
             'parcel_id': parcel_id,

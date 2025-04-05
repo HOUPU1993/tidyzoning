@@ -93,10 +93,15 @@ def check_footprint(tidyparcel_gdf, tidybuilding):
         # Get strict and relaxable geometries from the parcel
         strict_geom = parcel['buildable_geometry_strict']
         relaxable_geom = parcel['buildable_geometry_relaxable']
+
+        # Check if the geometries are valid
+        if (isinstance(strict_geom, str) and strict_geom == "error") or (isinstance(relaxable_geom, str) and relaxable_geom == "error"):
+            results.append([parcel['Prop_ID'], parcel['parcel_id'], "MAYBE"])
+            continue
         
         # Skip parcels with no valid geometry in both cases.
-        if ((strict_geom is None or strict_geom.is_empty) and 
-            (relaxable_geom is None or relaxable_geom.is_empty)):
+        if ((strict_geom is None or strict_geom.is_empty) or (relaxable_geom is None or relaxable_geom.is_empty)):
+            results.append([parcel['Prop_ID'], parcel['parcel_id'], "MAYBE"])
             continue
         
         allowed_result = False  # default allowed is False
