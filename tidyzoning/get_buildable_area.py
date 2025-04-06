@@ -148,9 +148,18 @@ def get_buildable_area(tidyparcel_with_setbacks):
             'buildable_geometry_strict': buildable_geom_max
         })
 
-    # Convert results into a GeoDataFrame.
-    # Note: one of the geometries is set as the active geometry, while the other is stored as an attribute.
-    buildable_gdf = gpd.GeoDataFrame(buildable_results, geometry='buildable_geometry_strict', crs='EPSG:3857')
-    buildable_gdf = buildable_gdf.dropna(subset=['buildable_geometry_relaxable', 'buildable_geometry_strict'])
 
-    return buildable_gdf
+    # # Note: one of the geometries is set as the active geometry, while the other is stored as an attribute.
+    # buildable_gdf = gpd.GeoDataFrame(buildable_results, geometry='buildable_geometry_strict', crs='EPSG:3857')
+    # buildable_gdf = buildable_gdf.dropna(subset=['buildable_geometry_relaxable', 'buildable_geometry_strict'])
+
+    # return buildable_gdf
+
+    # Convert results into a GeoDataFrame.
+    buildable_df = pd.DataFrame(buildable_results)
+    required_columns = ['buildable_geometry_relaxable', 'buildable_geometry_strict']
+    if buildable_df.empty or not all(col in buildable_df.columns for col in required_columns):
+        return gpd.GeoDataFrame(columns=['Prop_ID', 'parcel_id'] + required_columns, crs='EPSG:3857')
+    else:
+        buildable_gdf = gpd.GeoDataFrame(buildable_df, geometry='buildable_geometry_strict', crs='EPSG:3857')
+        return buildable_gdf
