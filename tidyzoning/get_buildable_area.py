@@ -36,7 +36,8 @@ def get_buildable_area(tidyparcel_with_setbacks):
     # Initialize unit registry for unit conversion
     ureg = UnitRegistry()
     buildable_results = []
-
+    fallback_ids = []
+    
     # Function to convert a single setback value to meters
     # def convert_to_meters(value, unit):
     #     if pd.notna(value) and pd.notna(unit):
@@ -68,6 +69,7 @@ def get_buildable_area(tidyparcel_with_setbacks):
         polygons = list(polygonize(group.geometry))
         parcel_geometry = unary_union(polygons)
         prop_id = group["Prop_ID"].iloc[0] if "Prop_ID" in group.columns else None
+        fallback_ids.append({'Prop_ID': prop_id, 'parcel_id': parcel_id})
 
         # If all setback values are missing, return the parcel geometry as both buildable areas.
         if group['setback'].isna().all():
@@ -158,8 +160,11 @@ def get_buildable_area(tidyparcel_with_setbacks):
     # Convert results into a GeoDataFrame.
     buildable_df = pd.DataFrame(buildable_results)
     required_columns = ['buildable_geometry_relaxable', 'buildable_geometry_strict']
+    # If buildable_df is empty or missing the required key columns, use the previously saved fallback_ids to construct the return result
     if buildable_df.empty or not all(col in buildable_df.columns for col in required_columns):
-        return gpd.GeoDataFrame(columns=['Prop_ID', 'parcel_id'] + required_columns, crs='EPSG:3857')
+        fallback_df = pd.DataFrame(fallback_ids)  # fallback_ids has already recorded each parcel's Prop_ID and parcel_id in the for loop
+        fallback_df['buildable_geometry_relaxable'] = None
+        fallback_df['buildable_geometry_strict'] = None
+        return gpd.GeoDataFrame(fallback_df, geometry='buildable_geometry_strict', crs='EPSG:3857')
     else:
-        buildable_gdf = gpd.GeoDataFrame(buildable_df, geometry='buildable_geometry_strict', crs='EPSG:3857')
-        return buildable_gdf
+        return gpd.GeoDataFrame(buildable_df, geometry='buildable_geometry_strict', crs='EPSG:3857')
