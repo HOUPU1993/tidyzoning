@@ -108,7 +108,7 @@ def check_footprint(tidyparcel_gdf, tidybuilding):
         
         # Loop through each building dimension (assumes tidybuilding has one or more rows)
         for _, building in tidybuilding.iterrows():
-            dims = [(building['width'], building['depth'])]
+            dims = [(building['width'] * 0.3048, building['depth'] * 0.3048)] # Convert feet to meters
             
             # First, check the strict buildable area
             if strict_geom is not None and not strict_geom.is_empty:
