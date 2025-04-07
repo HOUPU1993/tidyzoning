@@ -13,7 +13,7 @@ from .check_unit_size import check_unit_size
 from .check_stories import check_stories
 from .add_setbacks import add_setbacks
 from .get_buildable_area import get_buildable_area
-from .process_zoning_analysis import process_zoning_analysis
+from .zoning_analysis_pipeline import zoning_analysis_pipeline
 from .unify_tidybuilding import unify_tidybuilding
 from .filter_constraints import filter_constraints
 from .check_zoning_process import check_zoning_process
