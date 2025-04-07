@@ -57,7 +57,7 @@ def generate_parcel_info(tidyparcel, tidyzoning):
         # Compute lot area using polygonized edges (without centroids)
         polygons = polygonize(unary_union(no_centroids_rows.geometry))
         lot_polygon = unary_union(polygons)
-        lot_area = lot_polygon.area * 10.7639  # convert m² to ft²
+        lot_area = lot_polygon.area / 4046.8564224  # convert m² to acre
 
         records.append({
             "Prop_ID": Prop_ID,
