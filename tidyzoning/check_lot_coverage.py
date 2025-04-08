@@ -38,7 +38,7 @@ def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
     # Calculate lot_coverage for each parcel_id
     lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
     if lot_area is not None and lot_area != 0:
-        lot_coverage = (footprint / lot_area) * 100
+        lot_coverage = (footprint / (lot_area * 43560)) * 100
     else:
         lot_coverage = 0  # or maybe 0 or np.nan depending on your context
         

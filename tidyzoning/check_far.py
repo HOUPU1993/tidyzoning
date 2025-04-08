@@ -40,7 +40,7 @@ def check_far(tidybuilding, tidyzoning, tidyparcel):
     # Calculate FAR for each Parcel_ID
     lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
     if lot_area is not None and lot_area != 0:
-        far = fl_area / lot_area
+        far = fl_area / (lot_area * 43560) # Convert lot area from acres to square feet
     else:
         far = 0  # or maybe 0 or np.nan depending on your context
 
