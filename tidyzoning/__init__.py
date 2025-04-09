@@ -20,3 +20,4 @@ from .check_zoning_process import check_zoning_process
 from .parcels_in_zoning import parcels_in_zoning
 from .parcel_in_confidence import parcel_in_confidence
 from .generate_parcel_info import generate_parcel_info
+from .check_height_eave import check_height_eave
