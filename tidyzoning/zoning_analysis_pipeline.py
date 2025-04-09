@@ -25,6 +25,7 @@ from tidyzoning import check_bedrooms
 from tidyzoning import check_lot_coverage
 from tidyzoning import check_unit_density
 from tidyzoning import check_height_eave
+from tidyzoning import check_unit_qty
 from tidyzoning import add_setbacks
 from tidyzoning import get_buildable_area
 from tidyzoning import unify_tidybuilding
@@ -58,6 +59,7 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
          - check_lot_coverage
          - check_fl_area
          - check_height_eave
+         - check_unit_qty
          
          Checking logic for subsequent checks:
            - Execute each check function sequentially.
@@ -118,7 +120,8 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
         ("check_bedrooms", check_bedrooms),
         ("check_lot_coverage", check_lot_coverage),
         ("check_fl_area", check_fl_area),
-        ("check_height_eave", check_height_eave)
+        ("check_height_eave", check_height_eave),
+        ("check_unit_qty", check_unit_qty)
     ]
 
     def process_allowed_parcel(row):

@@ -11,6 +11,8 @@ from .check_lot_coverage import check_lot_coverage
 from .check_unit_density import check_unit_density
 from .check_unit_size import check_unit_size
 from .check_stories import check_stories
+from .check_height_eave import check_height_eave
+from .check_unit_qty import check_unit_qty
 from .add_setbacks import add_setbacks
 from .get_buildable_area import get_buildable_area
 from .zoning_analysis_pipeline import zoning_analysis_pipeline
@@ -20,4 +22,3 @@ from .check_zoning_process import check_zoning_process
 from .parcels_in_zoning import parcels_in_zoning
 from .parcel_in_confidence import parcel_in_confidence
 from .generate_parcel_info import generate_parcel_info
-from .check_height_eave import check_height_eave
