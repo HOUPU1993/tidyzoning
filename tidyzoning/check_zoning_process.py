@@ -8,97 +8,58 @@ from joblib import Parallel, delayed
 
 def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func, n_jobs=-1):
     """
-    Updated check_zoning_process function with an optimized flow:
-
-      1. A row_id is assigned to tidyparcel to preserve the original order.
-      2. Land use is checked to extract allowed zoning IDs.
-      3. Parcels are split into two groups:
-         - Allowed parcels: those whose zoning IDs are in allowed_zoning_ids.
-         - Disallowed parcels: those whose zoning IDs are not allowed.
-      4. Allowed parcels are processed in parallel via check_func.
-      5. For disallowed parcels, a DataFrame is explicitly built that includes:
-         - zoning_id, parcel_id, Prop_ID, row_id from the original parcels.
-         - 'allowed' is set to False.
-         - 'constraint_min_note' and 'constraint_max_note' are fixed as "false by check_land_use".
-      6. Finally, both results are concatenated and sorted by row_id to maintain the original order.
+    Check our tidybuilding in all tidyzonings and corresponding parcels
 
     Parameters:
-      tidybuilding (pd.DataFrame): DataFrame containing building information.
-      tidyzoning (pd.DataFrame): DataFrame containing zoning information.
-      tidyparcel (pd.DataFrame): DataFrame containing parcel information.
-      check_func (function): Function to check constraints.
-      n_jobs (int): Number of parallel jobs (-1 uses all available CPUs).
+    tidybuilding (pd.DataFrame): DataFrame containing building information.
+    tidyzoning (pd.DataFrame): DataFrame containing zoning information.
+    tidyparcel (pd.DataFrame): DataFrame containing parcel information.
+    check_func (function): Function to check certain constraints.
+    n_jobs (int): Number of parallel jobs (-1 means use all CPUs).
 
     Returns:
-      pd.DataFrame: A DataFrame with columns:
-                  zoning_id, allowed, constraint_min_note, constraint_max_note,
-                  parcel_id, Prop_ID,
-                  preserving the original parcel order.
+    pd.DataFrame: DataFrame with computed factors, preserving original parcel order.
     """
-    # Make a copy of tidyparcel and add a row_id column to preserve the original order.
-    tidyparcel = tidyparcel.copy()
-    tidyparcel["row_id"] = tidyparcel.index
-
-    # Step 1: Perform land use check to obtain allowed zoning IDs.
+    # Step 1: Perform land use check
     check_land_use_results = check_land_use(tidybuilding, tidyzoning)
     allowed_zoning_ids = check_land_use_results[check_land_use_results['allowed'] == True]['zoning_id'].unique()
 
-    # Step 2: Split parcels into allowed and disallowed groups.
-    allowed_parcels = tidyparcel[tidyparcel['zoning_id'].isin(allowed_zoning_ids)].reset_index(drop=True)
-    disallowed_parcels = tidyparcel[~tidyparcel['zoning_id'].isin(allowed_zoning_ids)].reset_index(drop=True)
-    
-    # For allowed parcels, filter tidyzoning to include only allowed zones.
-    tidyzoning_allowed = tidyzoning.loc[allowed_zoning_ids]
-    
-    # Step 3: Define a function to process allowed parcels.
-    def process_allowed_parcel(row):
+    # Step 2: Filter tidyzoning based on allowed zoning IDs
+    tidyzoning_filtered = tidyzoning[tidyzoning.index.isin(allowed_zoning_ids)]
+
+    # Step 3: Filter tidyparcel based on allowed zoning IDs and add row_id
+    tidyparcel_filtered = tidyparcel[tidyparcel['zoning_id'].isin(tidyzoning_filtered.index)].reset_index(drop=True)
+    tidyparcel_filtered["row_id"] = tidyparcel_filtered.index
+
+    # Step 4: Define processing function for one row
+    def process_one_parcel(row):
         prop_id = row['Prop_ID']
         parcel_id = row['parcel_id']
         zoning_idx = row['zoning_id']
         row_id = row['row_id']
-        
-        # Filter allowed_parcels for the current parcel.
-        filtered_tidyparcel = allowed_parcels[
-            (allowed_parcels['parcel_id'] == parcel_id) &
-            (allowed_parcels['Prop_ID'] == prop_id)
+
+        filtered_tidyparcel = tidyparcel_filtered[
+            (tidyparcel_filtered['parcel_id'] == parcel_id) & 
+            (tidyparcel_filtered['Prop_ID'] == prop_id)
         ]
-        # Filter the tidyzoning_allowed for the current zoning.
-        filtered_tidyzoning = tidyzoning_allowed.loc[[zoning_idx]]
-        
-        # Execute the provided check function.
+
+        filtered_tidyzoning = tidyzoning_filtered.loc[[zoning_idx]]
         results = check_func(tidybuilding, filtered_tidyzoning, filtered_tidyparcel)
-        # Append parcel-specific information.
         results["parcel_id"] = parcel_id
         results["Prop_ID"] = prop_id
-        results["row_id"] = row_id
+        results["row_id"] = row_id  # Add row_id for ordering
         return results
 
-    # Step 4: Process allowed parcels in parallel with a progress bar.
-    allowed_results = Parallel(n_jobs=n_jobs)(
-        delayed(process_allowed_parcel)(row)
-        for _, row in tqdm(allowed_parcels.iterrows(), total=allowed_parcels.shape[0], desc="Processing Allowed Parcels")
+    # Step 5: Run in parallel with progress bar
+    results = Parallel(n_jobs=n_jobs)(
+        delayed(process_one_parcel)(row)
+        for _, row in tqdm(tidyparcel_filtered.iterrows(), total=tidyparcel_filtered.shape[0], desc="Parallel Processing")
     )
-    
-    if allowed_results:
-        allowed_df = pd.concat(allowed_results, ignore_index=True)
-    else:
-        allowed_df = pd.DataFrame()
 
-    # Step 5: For disallowed parcels, directly build a DataFrame with the required fields.
-    if not disallowed_parcels.empty:
-        disallowed_df = pd.DataFrame({
-            "zoning_id": disallowed_parcels["zoning_id"],
-            "allowed": True,  # Boolean False
-            "constraint_min_note": "false by check_land_use",
-            "constraint_max_note": "false by check_land_use",
-            "parcel_id": disallowed_parcels["parcel_id"],
-            "Prop_ID": disallowed_parcels["Prop_ID"],
-            "row_id": disallowed_parcels["row_id"]
-        })
+    # Step 6: Combine and sort results to maintain original parcel order
+    if results:
+        final_df = pd.concat(results, ignore_index=True)
+        final_df_sorted = final_df.sort_values("row_id").drop(columns="row_id")
+        return final_df_sorted
     else:
-        disallowed_df = pd.DataFrame()
-
-    # Step 6: Combine allowed and disallowed results and sort by row_id to preserve the original order.
-    final_df = pd.concat([allowed_df, disallowed_df], ignore_index=True)
-    final_df_sorted = final_df.sort_values("row_id").drop(columns="row_id")
-    return final_df_sorted
+        return pd.DataFrame()
