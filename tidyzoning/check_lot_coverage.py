@@ -54,9 +54,9 @@ def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
         if zoning_req is None or zoning_req.empty:
             results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
             continue
-        # Check if zoning constraints include 'lot_coverage'
-        if 'lot_coverage' in zoning_req['spec_type'].values:
-            lot_coverage_row = zoning_req[zoning_req['spec_type'] == 'lot_coverage']
+        # Check if zoning constraints include 'lot_cov_bldg'
+        if 'lot_cov_bldg' in zoning_req['spec_type'].values:
+            lot_coverage_row = zoning_req[zoning_req['spec_type'] == 'lot_cov_bldg']
             min_lot_coverage = lot_coverage_row['min_value'].values[0]  # Extract min values
             max_lot_coverage = lot_coverage_row['max_value'].values[0]  # Extract max values
             min_select = lot_coverage_row['min_select'].values[0]  # Extract min select info
