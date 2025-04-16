@@ -31,18 +31,17 @@ def check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel=None):
     How to use:
     check_unit_size_result = check_unit_size(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
-
     results = []
 
     # Calculate the floor area of the building
     if len(tidybuilding['mean_unit_size']) == 1:
         mean_unit_size = tidybuilding['mean_unit_size'].iloc[0]
     else:
-        return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note']) # Return an empty DataFrame
-    
+        return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note'])
+
     # Iterate through each row in tidyzoning
     for index, zoning_row in tidyzoning.iterrows():
-        zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)  # ✅ Fix the issue of passing Series
+        zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)
 
         # Fix the string check here
         if isinstance(zoning_req, str) and zoning_req == "No zoning requirements recorded for this district":
@@ -55,16 +54,18 @@ def check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel=None):
         # Check if zoning constraints include 'unit_size_avg'
         if 'unit_size_avg' in zoning_req['spec_type'].values:
             unit_size_avg_row = zoning_req[zoning_req['spec_type'] == 'unit_size_avg']
-            min_unit_size = unit_size_avg_row['min_value'].values[0]  # Extract min values
-            max_unit_size = unit_size_avg_row['max_value'].values[0]  # Extract max values
-            min_select = unit_size_avg_row['min_select'].values[0]  # Extract min select info
-            max_select = unit_size_avg_row['max_select'].values[0]  # Extract max select info
+            min_unit_size = unit_size_avg_row['min_value'].values[0] # Extract min values
+            max_unit_size = unit_size_avg_row['max_value'].values[0] # Extract max values
+            min_select = unit_size_avg_row['min_select'].values[0] # Extract min select info
+            max_select = unit_size_avg_row['max_select'].values[0] # Extract max select info
             constraint_min_note = unit_size_avg_row['constraint_min_note'].values[0] # Extract min constraint note
             constraint_max_note = unit_size_avg_row['constraint_max_note'].values[0] # Extract max constraint note
-            
+
             # If min_select or max_select is 'OZFS Error', default to allowed
             if min_select == 'OZFS Error' or max_select == 'OZFS Error':
-                results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
+                results.append({'zoning_id': index, 'allowed': True, 
+                                'constraint_min_note': constraint_min_note, 
+                                'constraint_max_note': constraint_max_note})
                 continue
 
             # Handle NaN values and list
@@ -74,7 +75,7 @@ def check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel=None):
             else:
                 # Filter out NaN and None values, ensuring at least one valid value
                 min_unit_size = [v for v in min_unit_size if pd.notna(v) and v is not None and not isinstance(v, str)]
-                if not min_unit_size:  # If all values are NaN or None, replace with default value
+                if not min_unit_size: # If all values are NaN or None, replace with default value
                     min_unit_size = [0]
             # Handle max_unit_size
             if not isinstance(max_unit_size, list):
@@ -82,9 +83,9 @@ def check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel=None):
             else:
                 # Filter out NaN and None values, ensuring at least one valid value
                 max_unit_size = [v for v in max_unit_size if pd.notna(v) and v is not None and not isinstance(v, str)]
-                if not max_unit_size:  # If all values are NaN or None, replace with default value
+                if not max_unit_size: # If all values are NaN or None, replace with default value
                     max_unit_size = [1000000]
-            
+
             # Check min condition
             min_check_1 = min(min_unit_size) <= mean_unit_size
             min_check_2 = max(min_unit_size) <= mean_unit_size
@@ -97,7 +98,7 @@ def check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel=None):
                     min_allowed = False
                 else:
                     min_allowed = "MAYBE"
-            
+
             # Check max condition
             max_check_1 = min(max_unit_size) >= mean_unit_size
             max_check_2 = max(max_unit_size) >= mean_unit_size
@@ -110,17 +111,18 @@ def check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel=None):
                     max_allowed = False
                 else:
                     max_allowed = "MAYBE"
-            
+    
             # Determine final allowed status
             if min_allowed == "MAYBE" or max_allowed == "MAYBE":
                 allowed = "MAYBE"
             else:
                 allowed = min_allowed and max_allowed
             
-            results.append({'zoning_id': index, 'allowed': allowed, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
+            results.append({'zoning_id': index, 'allowed': allowed, 
+                            'constraint_min_note': constraint_min_note, 
+                            'constraint_max_note': constraint_max_note})
         else:
-            results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})  # If zoning has no constraints, default to True
-
+            results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
     return pd.DataFrame(results)
 
 
@@ -128,7 +130,7 @@ def check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel=None):
 # Check the Unit_size constraints
 def check_unit_size_fun(tidybuilding, tidyzoning, tidyparcel=None):
     """
-    Extract tidybuilding data and check zoning constraints, return whether it meets the requirements
+    Extract tidybuilding data and check zoning constraints, return whether it meets the requirements.
     """
     results = []
     bldg_type = find_bldg_type(tidybuilding)
@@ -222,91 +224,98 @@ def check_unit_size_fun(tidybuilding, tidyzoning, tidyparcel=None):
             :return: (allowed status (True / False / "MAYBE"), constraint information select_info)
             """
             constraint_values = {}
+            rule_selects = []
             select_info = None
 
-            def evaluate_expression(expression, context):
+            def evaluate_expression(expression, local_context):
                 """ Evaluate mathematical expression, e.g., '950 + 150 * (bedrooms - 2)' """
                 try:
-                    return eval(str(expression), {}, context)
+                    return eval(str(expression), {}, local_context)
                 except Exception:
                     return None
 
-            if isinstance(rules, list):
+            # If rules is not a list, convert it to a list and filter out None values
+            if not isinstance(rules, list):
+                rules = [rules]
+            rules = [rule for rule in rules if rule is not None]
+            
+            for rule in rules:
+                conditions = rule.get("conditions", [])
+                if isinstance(conditions, str):
+                    conditions = [conditions]
+                logical_operator = rule.get("logical_operator", None)
+                select_value = rule.get("select", None)
+                if select_value:
+                    rule_selects.append(select_value)
+                if rule.get("select_info", None):
+                    select_info = rule.get("select_info")
+                    
                 for num_bedrooms, size in size_dict.items():
-                    size = float(size)
-                    for rule in rules:
-                        conditions = rule.get("conditions", [])
-                        if isinstance(conditions, str):
-                            conditions = [conditions]
-                        expression = rule.get("expression", None)
-                        expressions = rule.get("expressions", None)
-                        rule_select_info = rule.get("select_info", None)
-
-                        if not expressions and not expression:
-                            continue
-                        context["bedrooms"] = num_bedrooms
-                        if expressions:
-                            evaluated_values = [evaluate_expression(expr, context) for expr in expressions]
-                        # Handle single expression
-                        elif expression:
-                            evaluated_values = [evaluate_expression(expression, context)]
+                    local_context = dict(context)
+                    local_context["bedrooms"] = num_bedrooms
+                    if conditions:
+                        if logical_operator == "OR":
+                            conditions_met = any(eval(cond, {}, local_context) for cond in conditions)
                         else:
-                            evaluated_values = []
-                        evaluated_values = [val for val in evaluated_values if val is not None]
-                        try:
-                            if any(eval(cond, {}, context) for cond in conditions) or not conditions:
-                                constraint_values[num_bedrooms] = evaluated_values
-                                if rule_select_info:
-                                    select_info = rule_select_info
-                        except Exception:
-                            continue
+                            conditions_met = all(eval(cond, {}, local_context) for cond in conditions)
+                    else:
+                        conditions_met = True
 
-            elif isinstance(rules, dict):
-                for num_bedrooms, size in size_dict.items():
-                    size = float(size)
-                    context["bedrooms"] = num_bedrooms  
-                    expressions = rules.get("expressions", [])
-                    expression = rules.get("expression", None)
-                    if not expressions and not expression:
+                    if not conditions_met:
                         continue
+
                     evaluated_values = []
-                    if expressions:
-                        evaluated_values = [evaluate_expression(expr, context) for expr in expressions]  
+                    expressions_list = rule.get("expressions", [])
+                    expression = rule.get("expression", None)
+                    if expressions_list:
+                        evaluated_values = [evaluate_expression(expr, local_context) for expr in expressions_list]
                     elif expression:
-                        evaluated_values = [evaluate_expression(expression, context)]  
+                        evaluated_values = [evaluate_expression(expression, local_context)]
                     evaluated_values = [val for val in evaluated_values if val is not None]
-                    if evaluated_values:
-                        constraint_values[num_bedrooms] = evaluated_values
-                        
-            if not constraint_values:
-                return True, select_info
+                    if not evaluated_values:
+                        continue
+                    if num_bedrooms not in constraint_values:
+                        constraint_values[num_bedrooms] = []
+                    constraint_values[num_bedrooms].extend(evaluated_values)
+            
+            final_select = rule_selects[0] if rule_selects else None
+
+            # Determine rule type: For min_val rules, comparison_func(1, 0) should return True; for max_val rules, it should return False.
+            is_min_rule = comparison_func(1, 0) 
 
             allowed_list = []
             for num_bedrooms, values in constraint_values.items():
-                if num_bedrooms in size_dict:
-                    building_size = size_dict[num_bedrooms]
-                    checks = [comparison_func(building_size, v) for v in values]
-
-                    if "either" in rules:
-                        allowed_list.append(any(checks))
-                    elif "unique" in rules:
-                        if all(checks):
-                            allowed_list.append(True)
-                        elif not any(checks):
-                            allowed_list.append(False)
-                        else:
-                            allowed_list.append("MAYBE")
+                building_size = float(size_dict[num_bedrooms])
+                checks = [comparison_func(building_size, v) for v in values]
+                if final_select == "either":
+                    allowed_list.append(any(checks))
+                elif final_select == "unique":
+                    if all(checks):
+                        allowed_list.append(True)
+                    elif not any(checks):
+                        allowed_list.append(False)
                     else:
-                        allowed_list.append(all(checks))
-
+                        allowed_list.append("MAYBE")
+                elif final_select == "min":
+                    if is_min_rule:  # min_val rule: use the minmum value
+                        allowed_list.append(building_size >= min(values))
+                    else:          # max_val rule: use the minmum value
+                        allowed_list.append(building_size <= min(values))
+                elif final_select == "max":
+                    if is_min_rule:  # min_val rule: use the maxmum value
+                        allowed_list.append(building_size >= max(values))
+                    else:          # max_val rule: use the maxmum value
+                        allowed_list.append(building_size <= max(values))
+                else:
+                    allowed_list.append(all(checks))
+            
             if "MAYBE" in allowed_list:
                 return "MAYBE", select_info
             return all(allowed_list), select_info
 
-        # Check min_val constraints
+        # Check min_val and max_val constraints
         min_val_rules = next((c.get("min_val") for c in unit_size_constraints if bldg_type in c.get("use_name", [])), [])
         max_val_rules = next((c.get("max_val") for c in unit_size_constraints if bldg_type in c.get("use_name", [])), [])
-
         if isinstance(min_val_rules, dict):
             min_val_rules = [min_val_rules]
         if isinstance(max_val_rules, dict):
@@ -325,7 +334,9 @@ def check_unit_size_fun(tidybuilding, tidyzoning, tidyparcel=None):
         if max_select_info:
             constraint_max_note = max_select_info
 
-        results.append({'zoning_id': index, 'allowed': allowed, 'constraint_min_note': constraint_min_note, 'constraint_max_note': constraint_max_note})
+        results.append({'zoning_id': index, 'allowed': allowed, 
+                        'constraint_min_note': constraint_min_note, 
+                        'constraint_max_note': constraint_max_note})
 
     return pd.DataFrame(results)
 
@@ -343,10 +354,10 @@ def check_unit_size(tidybuilding, tidyzoning, tidyparcel=None):
     Returns:
         DataFrame: Final result containing `zoning_id`, `allowed`, `constraint_min_note`, and `constraint_max_note`
     """
-    
+
     # Step 1: Run check_unit_size_avg
     check_unit_size_avg_result = check_unit_size_avg_fun(tidybuilding, tidyzoning, tidyparcel)
-    
+
     # Ensure required columns exist
     for col in ["constraint_min_note", "constraint_max_note"]:
         if col not in check_unit_size_avg_result.columns:
