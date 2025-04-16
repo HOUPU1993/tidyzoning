@@ -22,12 +22,19 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel):
     """
 
     # Extract IDs to filter
-    prop_id = tidyparcel.iloc[0]["Prop_ID"]
+    # prop_id = tidyparcel.iloc[0]["Prop_ID"]
     parcel_id = tidyparcel.iloc[0]["parcel_id"]
 
     # Filter for matching parcel and clean sides
+    # confident_tidyparcel = confident_tidyparcel[
+    #     (confident_tidyparcel["Prop_ID"] == prop_id) &
+    #     (confident_tidyparcel["parcel_id"] == parcel_id) &
+    #     (confident_tidyparcel["side"].notna()) &
+    #     (confident_tidyparcel["side"] != "centroid")
+    # ].copy()
+    
+    # Filter for matching parcel and clean sides
     confident_tidyparcel = confident_tidyparcel[
-        (confident_tidyparcel["Prop_ID"] == prop_id) &
         (confident_tidyparcel["parcel_id"] == parcel_id) &
         (confident_tidyparcel["side"].notna()) &
         (confident_tidyparcel["side"] != "centroid")

@@ -38,10 +38,7 @@ def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func, n_job
         zoning_idx = row['zoning_id']
         row_id = row['row_id']
 
-        filtered_tidyparcel = tidyparcel_filtered[
-            (tidyparcel_filtered['parcel_id'] == parcel_id) & 
-            (tidyparcel_filtered['Prop_ID'] == prop_id)
-        ]
+        filtered_tidyparcel = tidyparcel_filtered[tidyparcel_filtered['parcel_id'] == parcel_id]
 
         filtered_tidyzoning = tidyzoning_filtered.loc[[zoning_idx]]
         results = check_func(tidybuilding, filtered_tidyzoning, filtered_tidyparcel)
