@@ -16,7 +16,7 @@ def parcels_in_zoning(tidyparcel_fp, tidyzoning_gdf, output_fp=None):
     
     # Read and set CRS
     tidyparcel = gpd.read_file(tidyparcel_fp)
-    tidyparcel = tidyparcel.set_crs(3857, allow_override=True)
+    # tidyparcel = tidyparcel.set_crs(3857, allow_override=True)
 
     # Create union of zoning geometries
     tidyzoning_union = tidyzoning_gdf.dissolve().unary_union

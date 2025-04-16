@@ -152,7 +152,7 @@ def get_buildable_area(tidyparcel_with_setbacks):
 
 
     # # Note: one of the geometries is set as the active geometry, while the other is stored as an attribute.
-    # buildable_gdf = gpd.GeoDataFrame(buildable_results, geometry='buildable_geometry_strict', crs='EPSG:3857')
+    # buildable_gdf = gpd.GeoDataFrame(buildable_results, geometry='buildable_geometry_strict', crs='EPSG:3081')
     # buildable_gdf = buildable_gdf.dropna(subset=['buildable_geometry_relaxable', 'buildable_geometry_strict'])
 
     # return buildable_gdf
@@ -165,6 +165,6 @@ def get_buildable_area(tidyparcel_with_setbacks):
         fallback_df = pd.DataFrame(fallback_ids)  # fallback_ids has already recorded each parcel's Prop_ID and parcel_id in the for loop
         fallback_df['buildable_geometry_relaxable'] = None
         fallback_df['buildable_geometry_strict'] = None
-        return gpd.GeoDataFrame(fallback_df, geometry='buildable_geometry_strict', crs='EPSG:3857')
+        return gpd.GeoDataFrame(fallback_df, geometry='buildable_geometry_strict', crs='EPSG:3081')
     else:
-        return gpd.GeoDataFrame(buildable_df, geometry='buildable_geometry_strict', crs='EPSG:3857')
+        return gpd.GeoDataFrame(buildable_df, geometry='buildable_geometry_strict', crs='EPSG:3081')

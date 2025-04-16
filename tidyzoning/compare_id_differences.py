@@ -28,7 +28,7 @@ def compare_id_differences(df_houpu, df_kamryn, kamryn_filter_col='check_far'):
     # Filter df_houpu: retain records where 'allowed' is False or 'MAYBE'
     filtered_all = df_houpu[(df_houpu['allowed'] == False) | (df_houpu['allowed'] == 'MAYBE')]
     # Filter df_kamryn: retain records where the filtering field is False or 'MAYBE'
-    filtered_kamryn = df_kamryn[(df_kamryn[kamryn_filter_col] == False) | (df_kamryn[kamryn_filter_col] == 'MAYBE')]
+    filtered_kamryn = df_kamryn[(df_kamryn[kamryn_filter_col] == 'FALSE') | (df_kamryn[kamryn_filter_col] == 'MAYBE')]
     
     # Loop over the fields to compare, calculate and print the differences
     for col in compare_cols:
