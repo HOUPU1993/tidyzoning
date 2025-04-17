@@ -62,6 +62,21 @@ def get_buildable_area(tidyparcel_with_setbacks):
                 return 0.0001  # # if conversion fails, return the 0.001
         return 0.0001  # fallback small buffer value if value/unit is missing
 
+    def flatten_vals(sb):
+        """
+        Flattens nested lists of setbacks into a single list of scalars.
+        """
+        flat = []
+        if isinstance(sb, list):
+            for v in sb:
+                if isinstance(v, list):
+                    flat.extend(v)
+                else:
+                    flat.append(v)
+        else:
+            flat.append(sb)
+        return flat
+
     # Process each parcel (grouped by parcel_id)
     for parcel_id, group in tidyparcel_with_setbacks.groupby("parcel_id"):
         group = group.copy()
@@ -83,21 +98,33 @@ def get_buildable_area(tidyparcel_with_setbacks):
 
         # For each row, determine min and max setback values (whether single value or list) and create buffers.
         def process_row(row):
-            sb = row['setback']
-            unit = row['unit']
-            # If setback is a list, extract min and max; otherwise, use the single value for both.
-            if isinstance(sb, list):
-                min_sb = min(sb) if len(sb) > 0 else None
-                max_sb = max(sb) if len(sb) > 0 else None
-            else:
-                min_sb = sb
-                max_sb = sb
-            # Convert setbacks to meters
-            min_sb_m = convert_to_meters(min_sb, unit) if min_sb is not None else 0.0001
-            max_sb_m = convert_to_meters(max_sb, unit) if max_sb is not None else 0.0001
-            # Create buffered geometries for min and max setback
-            buffered_min = row.geometry.buffer(min_sb_m, resolution=1) if pd.notna(min_sb_m) else row.geometry
-            buffered_max = row.geometry.buffer(max_sb_m, resolution=1) if pd.notna(max_sb_m) else row.geometry
+            # sb = row['setback']
+            # unit = row['unit']
+            # # If setback is a list, extract min and max; otherwise, use the single value for both.
+            # if isinstance(sb, list):
+            #     min_sb = min(sb) if len(sb) > 0 else None
+            #     max_sb = max(sb) if len(sb) > 0 else None
+            # else:
+            #     min_sb = sb
+            #     max_sb = sb
+            # # Convert setbacks to meters
+            # min_sb_m = convert_to_meters(min_sb, unit) if min_sb is not None else 0.0001
+            # max_sb_m = convert_to_meters(max_sb, unit) if max_sb is not None else 0.0001
+            # # Create buffered geometries for min and max setback
+            # buffered_min = row.geometry.buffer(min_sb_m, resolution=1) if pd.notna(min_sb_m) else row.geometry
+            # buffered_max = row.geometry.buffer(max_sb_m, resolution=1) if pd.notna(max_sb_m) else row.geometry
+            # return pd.Series({'buffered_geometry_min': buffered_min, 'buffered_geometry_max': buffered_max})
+            sb_list = flatten_vals(row['setback'])
+            # Determine min/max setback values
+            min_sb = min(sb_list) if sb_list else 0
+            max_sb = max(sb_list) if sb_list else 0
+            # Convert to meters
+            unit = row.get('unit')
+            min_m = convert_to_meters(min_sb, unit)
+            max_m = convert_to_meters(max_sb, unit)
+            # Create buffers
+            buffered_min = row.geometry.buffer(min_m, resolution=1)
+            buffered_max = row.geometry.buffer(max_m, resolution=1)
             return pd.Series({'buffered_geometry_min': buffered_min, 'buffered_geometry_max': buffered_max})
 
         buffers = group.apply(process_row, axis=1)
