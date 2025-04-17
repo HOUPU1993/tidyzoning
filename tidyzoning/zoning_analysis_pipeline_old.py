@@ -38,7 +38,7 @@ from tidyzoning import generate_parcel_info
 from tidyzoning.check_footprint import check_footprint
 from tidyzoning.check_unit_size import check_unit_size
 
-def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, n_jobs=-1, debug=False):
+def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, n_jobs=-1):
     """
     Process each parcel with the following steps:
     
@@ -137,73 +137,63 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
         filtered_parcel = pd.DataFrame([row])
         try:
             filtered_zoning = tidyzoning_filtered.loc[[zoning_idx]]
-            # Record that the land use check passed.
-            check_process = {"check_land_use": True}
-            maybe_checks = []
-            false_reason = None
-
-            # Execute each subsequent check function sequentially.
-            for check_name, check_func in check_sequence:
-                result_df = check_func(tidybuilding, filtered_zoning, filtered_parcel)
-                allowed_val = result_df['allowed'].iloc[0]
-                check_process[check_name] = allowed_val
-
-                # If a check returns False, immediately stop further checks.
-                if allowed_val == False:
-                    false_reason = check_name
-                    break
-                elif allowed_val == "MAYBE":
-                    maybe_checks.append(check_name)
-
-            # Determine final allowed status and reason.
-            if false_reason is not None:
-                final_allowed = False
-                reason = false_reason
-            elif maybe_checks:
-                final_allowed = "MAYBE"
-                reason = ", ".join(maybe_checks)
-            else:
-                final_allowed = True
-                reason = "Our tidybuilding is allowed"
-
+        except KeyError:
             return {
                 "Prop_ID": prop_id,
                 "parcel_id": parcel_id,
                 "zoning_id": zoning_idx,
-                "allowed": final_allowed,
-                "reason": reason,
-                "check_process": check_process,
+                "allowed": False,
+                "reason": "zoning id not found",
+                "check_process": {"check_land_use": True},
                 "row_id": row_id
             }
 
-        except Exception as e:
-            if debug:
-                return {
-                    'Prop_ID': prop_id,
-                    'parcel_id': parcel_id,
-                    'zoning_id': zoning_idx,
-                    'allowed': 'ERROR',
-                    'reason': 'Encounter an Unkown Error',
-                    'check_process': {'Please Return to Check the Zoning Constraints'},
-                    'row_id': row_id,
-                    'error': repr(e)
-                }
-            else:
-                raise
+        # Record that the land use check passed.
+        check_process = {"check_land_use": True}
+        maybe_checks = []
+        false_reason = None
+
+        # Execute each subsequent check function sequentially.
+        for check_name, check_func in check_sequence:
+            result_df = check_func(tidybuilding, filtered_zoning, filtered_parcel)
+            allowed_val = result_df['allowed'].iloc[0]
+            check_process[check_name] = allowed_val
+
+            # If a check returns False, immediately stop further checks.
+            if allowed_val == False:
+                false_reason = check_name
+                break
+            elif allowed_val == "MAYBE":
+                maybe_checks.append(check_name)
+
+        # Determine final allowed status and reason.
+        if false_reason is not None:
+            final_allowed = False
+            reason = false_reason
+        elif maybe_checks:
+            final_allowed = "MAYBE"
+            reason = ", ".join(maybe_checks)
+        else:
+            final_allowed = True
+            reason = "Our tidybuilding is allowed"
+
+        return {
+            "Prop_ID": prop_id,
+            "parcel_id": parcel_id,
+            "zoning_id": zoning_idx,
+            "allowed": final_allowed,
+            "reason": reason,
+            "check_process": check_process,
+            "row_id": row_id
+        }
 
     # Process allowed parcels in parallel.
+    from joblib import Parallel, delayed
     allowed_results = Parallel(n_jobs=n_jobs)(
         delayed(process_allowed_parcel)(row)
         for _, row in tqdm(allowed_parcels.iterrows(), total=allowed_parcels.shape[0], desc="Processing Allowed Parcels")
     )
     allowed_df = pd.DataFrame(allowed_results)
-
-    # If debug mode, report any errors
-    if debug:
-        errs = allowed_df[allowed_df['reason'] == 'Encounter an Unkown Error']
-        if not errs.empty:
-            print('Errors detected in parcels:')
-            print(errs[['parcel_id', 'zoning_id', 'error']].to_string(index=False))
 
     # For parcels that failed the land use check, create default result rows.
     disallowed_results = []
@@ -226,8 +216,6 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
     # Combine allowed and disallowed results and restore original order.
     intermediate_df = pd.concat([allowed_df, disallowed_df], ignore_index=True)
     intermediate_df = intermediate_df.sort_values("row_id").drop(columns="row_id")
-    # Drop the internal 'error' column if present
-    intermediate_df = intermediate_df.drop(columns=['error'], errors='ignore')
     
     # -----------------------------
     # Step 6: Further processing for allowed parcels.
@@ -243,19 +231,6 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
 
         # Get the corresponding parcel row from tidyparcel.
         parcel_row = tidyparcel[tidyparcel['parcel_id'] == parcel_id]
-        # Early‐exit: compare tidybuilding['footprint'] (ft²) vs parcel_row['lot_area'] (acre → ft²)
-        if not parcel_row.empty:
-            building_footprint = tidybuilding['footprint'].iloc[0]
-            lot_acres = parcel_row['lot_area'].iloc[0]
-            parcel_sqft = lot_acres * 43560  # convert acres to ft²
-            if building_footprint > parcel_sqft:
-                cp = row['check_process']
-                cp['check_footprint'] = False
-                row['allowed'] = False
-                row['reason'] = 'the building area over the parcel size'
-                row['check_process'] = cp
-                return row
-            
         # Get the corresponding row from confident_tidyparcel.
         confident_parcel_row = confident_tidyparcel[confident_tidyparcel['parcel_id'] == parcel_id]
         # Get zoning row from tidyzoning.
