@@ -21,5 +21,6 @@ from .filter_constraints import filter_constraints
 from .check_zoning_process import check_zoning_process
 from .parcels_in_zoning import parcels_in_zoning
 from .parcel_in_confidence import parcel_in_confidence
+from .parcel_in_nonconfidence import parcel_in_nonconfidence
 from .generate_parcel_info import generate_parcel_info
 from .compare_id_differences import compare_id_differences
