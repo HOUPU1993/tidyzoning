@@ -93,5 +93,5 @@ def generate_parcel_info(tidyparcel, tidyzoning):
 
     # Drop rows where any key dimension is missing
     df = pd.DataFrame(records)
-    df = df.dropna(subset=["lot_width", "lot_depth", "lot_area"]).reset_index(drop=True)
+    # df = df.dropna(subset=["lot_width", "lot_depth", "lot_area"]).reset_index(drop=True)
     return df
