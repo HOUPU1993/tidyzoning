@@ -72,9 +72,23 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, buf
                 sides.at[idx, "setback"] = val
                 sides.at[idx, "unit"] = filt.iloc[0]["unit"]
 
+    def _unwrap_value(raw, prefer="max"):
+        """
+        Turn raw (which might be a number, list, tuple or ndarray)
+        into a single float. If iterable, take min or max.
+        """
+        if isinstance(raw, (list, tuple, np.ndarray)):
+            if prefer == "max":
+                return float(max(raw))
+            else:
+                return float(min(raw))
+        return float(raw)
+
     # 4. Extra‐rule: distance to boundary
     if "setback_dist_boundary" in zoning_req["spec_type"].values:
-        dist_b = float(zoning_req.loc[zoning_req["spec_type"] == "setback_dist_boundary", "min_value"].iloc[0])
+        # dist_b = float(zoning_req.loc[zoning_req["spec_type"] == "setback_dist_boundary", "min_value"].iloc[0])
+        raw = zoning_req.loc[zoning_req["spec_type"] == "setback_dist_boundary","min_value"].iloc[0]
+        dist_b = _unwrap_value(raw, prefer="max")
         # extract district boundary as MultiLineString
         boundary = unary_union(tidyzoning.geometry.values).boundary
         buf = boundary.buffer(buffer_dist)
@@ -86,7 +100,9 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, buf
 
     # 5. Extra‐rule: side‐sum
     if "setback_side_sum" in zoning_req["spec_type"].values:
-        side_sum = float(zoning_req.loc[zoning_req["spec_type"] == "setback_side_sum", "min_value"].iloc[0])
+        # side_sum = float(zoning_req.loc[zoning_req["spec_type"] == "setback_side_sum", "min_value"].iloc[0])
+        raw = zoning_req.loc[zoning_req["spec_type"] == "setback_side_sum","min_value"].iloc[0]
+        side_sum = _unwrap_value(raw, prefer="max") 
         # get indexes for interior & exterior
         int_idx = list(sides[sides.side=="Interior side"].index)
         ext_idx = list(sides[sides.side=="Exterior side"].index)
@@ -104,12 +120,15 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, buf
             v_ext, v_int = sides.at[idx_ext,"setback"], sides.at[idx_int,"setback"]
             extra = max(0, side_sum - (v_ext + v_int))
             # UPDATE ALL interior‐side rows at once
-            int_mask = sides.side == "Interior side"
-            sides.loc[int_mask, "setback"] = sides.loc[int_mask, "setback"] + extra
+            # int_mask = sides.side == "Interior side"
+            # sides.loc[int_mask, "setback"] = sides.loc[int_mask, "setback"] + extra
+            sides.loc[sides.side == "Interior side", "setback"] += extra
 
     # 6. Extra‐rule: front/rear sum
     if "setback_front_sum" in zoning_req["spec_type"].values:
-        front_sum = float(zoning_req.loc[zoning_req["spec_type"] == "setback_front_sum", "min_value"].iloc[0])
+        # front_sum = float(zoning_req.loc[zoning_req["spec_type"] == "setback_front_sum", "min_value"].iloc[0])
+        raw = zoning_req.loc[zoning_req["spec_type"] == "setback_front_sum","min_value"].iloc[0]
+        front_sum = _unwrap_value(raw, prefer="max")
         f_idx = list(sides[sides.side == "front"].index)
         r_idx = list(sides[sides.side == "rear"].index)
         if len(f_idx)>=1 and len(r_idx)>=1:
@@ -117,8 +136,9 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, buf
             vf, vr = sides.at[idx_f,"setback"], sides.at[idx_r,"setback"]
             extra = max(0, front_sum - (vf + vr))
             # UPDATE ALL rear‐side rows at once
-            rear_mask = sides.side == "rear"
-            sides.loc[rear_mask, "setback"] = sides.loc[rear_mask, "setback"] + extra
+            # rear_mask = sides.side == "rear"
+            # sides.loc[rear_mask, "setback"] = sides.loc[rear_mask, "setback"] + extra
+            sides.loc[sides.side == "rear", "setback"] += extra
         else:
         # not enough edges → skip front‐rear sum rule
             pass
