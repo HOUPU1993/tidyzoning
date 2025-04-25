@@ -53,42 +53,13 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, buf
         side_type = row["side"]
         if side_type in name_key:
             filt = zoning_req[zoning_req["spec_type"] == name_key[side_type]]
-            # if not filt.empty:
-            #     sides.at[idx, "setback"] = filt.iloc[0]["min_value"]
-            #     sides.at[idx, "unit"]    = filt.iloc[0]["unit"]
             if not filt.empty:
-                raw = filt.iloc[0]["min_value"]
-                # sort if it’s a tuple, list or ndarray
-                if isinstance(raw, tuple):
-                    val = sorted(raw, reverse=True)
-                elif isinstance(raw, list):
-                    val = sorted(raw, reverse=True)
-                elif isinstance(raw, np.ndarray):
-                    val = sorted(raw, reverse=True)
-                else:
-                    # scalar or pint.Quantity, leave as is
-                    val = raw
-
-                sides.at[idx, "setback"] = val
-                sides.at[idx, "unit"] = filt.iloc[0]["unit"]
-
-    def _unwrap_value(raw, prefer="max"):
-        """
-        Turn raw (which might be a number, list, tuple or ndarray)
-        into a single float. If iterable, take min or max.
-        """
-        if isinstance(raw, (list, tuple, np.ndarray)):
-            if prefer == "max":
-                return float(max(raw))
-            else:
-                return float(min(raw))
-        return float(raw)
+                sides.at[idx, "setback"] = filt.iloc[0]["min_value"]
+                sides.at[idx, "unit"]    = filt.iloc[0]["unit"]
 
     # 4. Extra‐rule: distance to boundary
     if "setback_dist_boundary" in zoning_req["spec_type"].values:
-        # dist_b = float(zoning_req.loc[zoning_req["spec_type"] == "setback_dist_boundary", "min_value"].iloc[0])
-        raw = zoning_req.loc[zoning_req["spec_type"] == "setback_dist_boundary","min_value"].iloc[0]
-        dist_b = _unwrap_value(raw, prefer="max")
+        dist_b = zoning_req.loc[zoning_req["spec_type"] == "setback_dist_boundary", "min_value"].iloc[0]
         # extract district boundary as MultiLineString
         boundary = unary_union(tidyzoning.geometry.values).boundary
         buf = boundary.buffer(buffer_dist)
@@ -100,45 +71,35 @@ def add_setbacks(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, buf
 
     # 5. Extra‐rule: side‐sum
     if "setback_side_sum" in zoning_req["spec_type"].values:
-        # side_sum = float(zoning_req.loc[zoning_req["spec_type"] == "setback_side_sum", "min_value"].iloc[0])
-        raw = zoning_req.loc[zoning_req["spec_type"] == "setback_side_sum","min_value"].iloc[0]
-        side_sum = _unwrap_value(raw, prefer="max") 
+        side_sum = np.array(zoning_req.loc[zoning_req["spec_type"] == "setback_side_sum", "min_value"].iloc[0])
         # get indexes for interior & exterior
-        int_idx = list(sides[sides.side=="Interior side"].index)
-        ext_idx = list(sides[sides.side=="Exterior side"].index)
+        int_idxs = list(sides[sides.side=="Interior side"].index)
+        ext_idxs = list(sides[sides.side=="Exterior side"].index)
         # need two edges
-        if len(int_idx)>=1 and len(ext_idx)>=1:
-            idx_ext, idx_int = ext_idx[0], int_idx[0]
-        elif len(int_idx)>=2:
-            idx_ext, idx_int = int_idx[0], int_idx[1]
-        elif len(ext_idx)>=2:
-            idx_ext, idx_int = ext_idx[0], ext_idx[1]
+        if len(int_idxs)>=1 and len(ext_idxs)>=1:
+            side_1_idx, side_2_idx = ext_idxs[0], int_idxs[0]
+        elif len(int_idxs)>=2:
+            side_1_idx, side_2_idx = int_idxs[0], int_idxs[1]
+        elif len(ext_idxs)>=2:
+            side_1_idx, side_2_idx = ext_idxs[0], ext_idxs[1]
         else:
             # not enough edges → skip side‐sum rule
-            idx_ext = idx_int = None
-        if idx_ext is not None:
-            v_ext, v_int = sides.at[idx_ext,"setback"], sides.at[idx_int,"setback"]
-            extra = max(0, side_sum - (v_ext + v_int))
-            # UPDATE ALL interior‐side rows at once
-            # int_mask = sides.side == "Interior side"
-            # sides.loc[int_mask, "setback"] = sides.loc[int_mask, "setback"] + extra
-            sides.loc[sides.side == "Interior side", "setback"] += extra
+            side_1_idx = side_2_idx = None
+        if side_2_idx is not None:
+            side_1_value, side_2_value = np.array(sides.at[side_1_idx,"setback"]), np.array(sides.at[side_2_idx,"setback"])
+            extra = np.maximum(0, side_sum - (side_1_value + side_2_value))
+            sides.at[side_2_idx,"setback"] = side_2_value + extra
 
     # 6. Extra‐rule: front/rear sum
     if "setback_front_sum" in zoning_req["spec_type"].values:
-        # front_sum = float(zoning_req.loc[zoning_req["spec_type"] == "setback_front_sum", "min_value"].iloc[0])
-        raw = zoning_req.loc[zoning_req["spec_type"] == "setback_front_sum","min_value"].iloc[0]
-        front_sum = _unwrap_value(raw, prefer="max")
-        f_idx = list(sides[sides.side == "front"].index)
-        r_idx = list(sides[sides.side == "rear"].index)
-        if len(f_idx)>=1 and len(r_idx)>=1:
-            idx_f, idx_r = f_idx[0], r_idx[0]
-            vf, vr = sides.at[idx_f,"setback"], sides.at[idx_r,"setback"]
-            extra = max(0, front_sum - (vf + vr))
-            # UPDATE ALL rear‐side rows at once
-            # rear_mask = sides.side == "rear"
-            # sides.loc[rear_mask, "setback"] = sides.loc[rear_mask, "setback"] + extra
-            sides.loc[sides.side == "rear", "setback"] += extra
+        front_sum = np.array(zoning_req.loc[zoning_req["spec_type"] == "setback_front_sum", "min_value"].iloc[0])
+        f_idxs = list(sides[sides.side == "front"].index)
+        r_idxs = list(sides[sides.side == "rear"].index)
+        if len(f_idxs)>=1 and len(r_idxs)>=1:
+            front_idx, rear_idx = f_idxs[0], r_idxs[0]
+            front_value, rear_value = np.array(sides.at[front_idx,"setback"]), np.array(sides.at[rear_idx,"setback"])
+            extra = max(0, front_sum - (front_value + rear_value))
+            sides.at[rear_idx,"setback"] = rear_value + extra
         else:
         # not enough edges → skip front‐rear sum rule
             pass
