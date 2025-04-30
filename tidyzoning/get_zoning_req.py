@@ -209,15 +209,32 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
         return pd.DataFrame(results)
 
     result = zoning_extract(tidybuilding, tidyzoning, tidyparcel)
+    # processed_constraints = process_zoning_constraints(result, tidybuilding)
+    # if not processed_constraints.empty:
+    #     processed_constraints = processed_constraints.dropna(subset=['min_value', 'max_value'], how='all').reset_index(drop=True)
+    # # collapse any list in min_value/max_value down to [min, max]
+    # for col in ['min_value', 'max_value']:
+    #     def squeeze(vals):
+    #         if isinstance(vals, list) and vals:
+    #             return [min(vals), max(vals)]
+    #         return vals
+    #     processed_constraints[col] = processed_constraints[col].apply(squeeze)
+
+    # return processed_constraints
+
     processed_constraints = process_zoning_constraints(result, tidybuilding)
-    if not processed_constraints.empty:
-        processed_constraints = processed_constraints.dropna(subset=['min_value', 'max_value'], how='all').reset_index(drop=True)
-    # collapse any list in min_value/max_value down to [min, max]
-    for col in ['min_value', 'max_value']:
+    if processed_constraints.empty:
+        return processed_constraints
+
+    # now it's safe to dropna and squeeze
+    processed_constraints = processed_constraints.dropna(
+        subset=['min_value','max_value'], how='all'
+    ).reset_index(drop=True)
+
+    for col in ['min_value','max_value']:
         def squeeze(vals):
             if isinstance(vals, list) and vals:
                 return [min(vals), max(vals)]
             return vals
         processed_constraints[col] = processed_constraints[col].apply(squeeze)
-
     return processed_constraints
