@@ -38,14 +38,14 @@ from tidyzoning import generate_parcel_info
 from tidyzoning.check_footprint import check_footprint
 from tidyzoning.check_unit_size import check_unit_size
 
-def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tidyparcel, n_jobs=-1, debug=False):
+def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel_dim, tidyparcel_geo, n_jobs=-1, debug=False):
     """
     Process each parcel with the following steps:
     
     Step 1: Perform a land use check:
       - Use check_land_use on tidyzoning to pre-filter and obtain zoning_ids with allowed == True.
     
-    Step 2: Filter tidyzoning and tidyparcel based on allowed zoning_ids.
+    Step 2: Filter tidyzoning and tidyparcel_dim based on allowed zoning_ids.
             Only the parcels that pass the land use check will be processed further.
             Also, add a "row_id" column to preserve the original order.
     
@@ -81,9 +81,9 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
     
     Parameters:
         tidybuilding (pd.DataFrame): Building information dataset.
-        tidyzoning (pd.DataFrame): Zoning information dataset, indexed by zoning_id.
-        tidyparcel (pd.DataFrame): Parcel information dataset; must include 'zoning_id', 'Prop_ID', 'parcel_id'.
-        confident_tidyparcel (pd.DataFrame): A parcel dataset with the same 'parcel_id's as tidyparcel.
+        tidyzoning (pd.GeoDataFrame): Zoning information dataset, indexed by zoning_id.
+        tidyparcel_dim (pd.DataFrame): Parcel information dataset; must include 'zoning_id', 'Prop_ID', 'parcel_id'.
+        tidyparcel_geo (pd.GeoDataFrame): A parcel dataset with the same 'parcel_id's as tidyparcel and geometry.
         n_jobs (int): Number of parallel tasks; -1 uses all available CPUs.
     
     Returns:
@@ -99,16 +99,26 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
     # Filter tidyzoning based on allowed zoning_ids.
     tidyzoning_filtered = tidyzoning[tidyzoning.index.isin(allowed_zoning_ids)]
 
-    # Split tidyparcel into those that passed and failed the land use check.
-    allowed_parcels = tidyparcel[tidyparcel['zoning_id'].isin(allowed_zoning_ids)].copy()
+    # Split tidyparcel_dim into those that passed and failed the land use check.
+    allowed_parcels = tidyparcel_dim[tidyparcel_dim['zoning_id'].isin(allowed_zoning_ids)].copy()
     allowed_parcels["row_id"] = allowed_parcels.index
-    disallowed_parcels = tidyparcel[~tidyparcel['zoning_id'].isin(allowed_zoning_ids)].copy()
+    disallowed_parcels = tidyparcel_dim[~tidyparcel_dim['zoning_id'].isin(allowed_zoning_ids)].copy()
     disallowed_parcels["row_id"] = disallowed_parcels.index
 
-    total = len(tidyparcel)
+    total = len(tidyparcel_dim)
     allowed_count = allowed_parcels.shape[0]
     percent = allowed_count / total * 100
     print(f"Parcel count: total {total} parcels,\n{allowed_count} passed land use check; others marked as check_land_use=False.\nPercentage remaining: {percent:.2f}%.")
+    # Overall confidence breakdown
+    conf_pct = tidyparcel_dim['confidence'].value_counts(normalize=True).mul(100).round(2)
+    print("Overall Confidence breakdown:")
+    for label, pct in conf_pct.items():
+        print(f"  • {label}: {pct:.2f}%")
+    # Allowed-only confidence breakdown
+    conf_pct_allowed = allowed_parcels['confidence'].value_counts(normalize=True).mul(100).round(2)
+    print("\nConfidence breakdown (landuse allowed parcels only):")
+    for label, pct in conf_pct_allowed.items():
+        print(f"  • {label}: {pct:.2f}%")
 
     # Subsequent check functions.
     check_sequence = [
@@ -132,6 +142,7 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
         parcel_id = row['parcel_id']
         zoning_idx = row['zoning_id']
         row_id = row['row_id']
+        conf = row['confidence']
 
         # Create a single-row DataFrame for processing.
         filtered_parcel = pd.DataFrame([row])
@@ -170,6 +181,7 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
                 "Prop_ID": prop_id,
                 "parcel_id": parcel_id,
                 "zoning_id": zoning_idx,
+                "confidence" : conf,
                 "allowed": final_allowed,
                 "reason": reason,
                 "check_process": check_process,
@@ -182,6 +194,7 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
                     'Prop_ID': prop_id,
                     'parcel_id': parcel_id,
                     'zoning_id': zoning_idx,
+                    "confidence" : conf,
                     'allowed': 'ERROR',
                     'reason': 'Encounter an Unkown Error',
                     'check_process': {'Please Return to Check the Zoning Constraints'},
@@ -212,10 +225,12 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
         parcel_id = row['parcel_id']
         zoning_idx = row['zoning_id']
         row_id = row['row_id']
+        conf = row['confidence']
         disallowed_results.append({
             "Prop_ID": prop_id,
             "parcel_id": parcel_id,
             "zoning_id": zoning_idx,
+            "confidence": conf,
             "allowed": False,
             "reason": "check_land_use",
             "check_process": {"check_land_use": False},
@@ -226,9 +241,13 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
     # Combine allowed and disallowed results and restore original order.
     intermediate_df = pd.concat([allowed_df, disallowed_df], ignore_index=True)
     intermediate_df = intermediate_df.sort_values("row_id").drop(columns="row_id")
+    # Adjust any parcels that passed all checks but have no confidence
+    mask_noncon_true = ((intermediate_df["confidence"] == "non_confidence_parcel") & (intermediate_df["allowed"] == True))
+    intermediate_df.loc[mask_noncon_true, "allowed"] = "MAYBE"
+    intermediate_df.loc[mask_noncon_true, "reason"] = "Initial check pass but no confidence for parcel"
     # Drop the internal 'error' column if present
-    intermediate_df = intermediate_df.drop(columns=['error'], errors='ignore')
-    
+    intermediate_df = intermediate_df.drop(columns=["error"], errors="ignore")
+
     # -----------------------------
     # Step 6: Further processing for allowed parcels.
     # -----------------------------
@@ -241,13 +260,13 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
         parcel_id = row['parcel_id']
         zoning_idx = row['zoning_id']
 
-        # Get the corresponding parcel row from tidyparcel.
-        parcel_row = tidyparcel[tidyparcel['parcel_id'] == parcel_id]
+        # Get the corresponding parcel row from tidyparcel_dim.
+        parcel_row = tidyparcel_dim[tidyparcel_dim['parcel_id'] == parcel_id]
         # Early‐exit: compare tidybuilding['footprint'] (ft²) vs parcel_row['lot_area'] (acre → ft²)
         if not parcel_row.empty:
             building_footprint = tidybuilding['footprint'].iloc[0]
-            lot_acres = parcel_row['lot_area'].iloc[0]
-            parcel_sqft = lot_acres * 43560  # convert acres to ft²
+            parcel_acres = parcel_row['lot_area'].iloc[0]
+            parcel_sqft = parcel_acres * 43560  # convert acres to ft²
             if building_footprint > parcel_sqft:
                 cp = row['check_process']
                 cp['check_footprint'] = False
@@ -256,8 +275,8 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
                 row['check_process'] = cp
                 return row
             
-        # Get the corresponding row from confident_tidyparcel.
-        confident_parcel_row = confident_tidyparcel[confident_tidyparcel['parcel_id'] == parcel_id]
+        # Get the corresponding row from tidyparcel_geo.
+        geo_parcel_row = tidyparcel_geo[tidyparcel_geo['parcel_id'] == parcel_id]
         # Get zoning row from tidyzoning.
         try:
             zoning_row = tidyzoning.loc[[zoning_idx]]
@@ -270,7 +289,7 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
             return row
 
         # Call the additional functions (each operating on a single parcel).
-        add_setbacks_results = add_setbacks(tidybuilding, zoning_row, parcel_row, confident_parcel_row)
+        add_setbacks_results = add_setbacks(tidybuilding, zoning_row, parcel_row, geo_parcel_row)
         buildable_area_result = get_buildable_area(add_setbacks_results)
         footprint_results = check_footprint(buildable_area_result, tidybuilding)
         if footprint_results.empty:
@@ -297,8 +316,9 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel, confident_tid
         return row
 
     # Sequentially process records in intermediate_df where allowed is True or "MAYBE".
-    df_to_further = intermediate_df[intermediate_df['allowed'].isin([True, "MAYBE"])].copy()
-    print(f"Number of parcels to run check_footprint after passing previous checks: {df_to_further.shape[0]} ({df_to_further.shape[0]/len(tidyparcel)*100:.2f}% of total parcels)")
+    mask_con_true_maybe = (intermediate_df["allowed"].isin([True, "MAYBE"]) & (intermediate_df["confidence"] == "confidence_parcel"))
+    df_to_further = intermediate_df[mask_con_true_maybe].copy()
+    print(f"Number of parcels to run check_footprint after passing previous checks: {df_to_further.shape[0]} ({df_to_further.shape[0]/len(tidyparcel_dim)*100:.2f}% of total parcels)")
     
     further_results = []
     for _, row in tqdm(df_to_further.iterrows(), total=df_to_further.shape[0], desc="Processing Further Checks"):
