@@ -89,7 +89,7 @@ def check_footprint(tidyparcel_gdf, tidybuilding):
     '''
     results = []
 
-    for _, parcel in tidyparcel_gdf.iterrows():
+    for _, parcel in tqdm(tidyparcel_gdf.iterrows(), total=len(tidyparcel_gdf), desc="Processing Parcels"):
         # Get strict and relaxable geometries from the parcel
         strict_geom = parcel['buildable_geometry_strict']
         relaxable_geom = parcel['buildable_geometry_relaxable']

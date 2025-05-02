@@ -335,7 +335,7 @@ def zoning_analysis_pipeline(tidybuilding, tidyzoning, tidyparcel_dim, tidyparce
         # retain "MAYBE" and update the reason
         if orig_allowed == "MAYBE" and row['allowed'] == True:
             intermediate_df.loc[mask, 'allowed'] = "MAYBE"
-            intermediate_df.loc[mask, 'reason'] = "please review the check_process"
+            intermediate_df.loc[mask, 'reason'] = "footprint check passed, but exist MAYBE in the constraits check"
             intermediate_df.loc[mask, ['Prop_ID', 'parcel_id', 'zoning_id', 'check_process']] = row[['Prop_ID', 'parcel_id', 'zoning_id', 'check_process']].values
         else:
             # Otherwise, directly replace with the corresponding values from further_df
