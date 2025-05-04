@@ -75,8 +75,8 @@ def generate_parcel_info(tidyparcel, tidyzoning):
         else:
             # Default: treat as confident
             if front.empty or side.empty:
-                lot_width = None
-                lot_depth = None
+                lot_width = 1
+                lot_depth = 1
             else:
                 lot_width = (front.geometry.length * 3.28084).max()
                 lot_depth = (side.geometry.length * 3.28084).max()

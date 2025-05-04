@@ -154,6 +154,11 @@ def zoning_analysis_pipeline(
                 if allowed_val == False:
                     prev = tidyparcel_df.at[idx, 'false_reasons']
                     tidyparcel_df.at[idx, 'false_reasons'] = name if prev is None else f"{prev}, {name}"
+            if not detailed_check:
+                mask_fail = tidyparcel_df[name] == False
+                df_fail = tidyparcel_df[mask_fail].copy()
+                false_dfs.append(df_fail)
+                tidyparcel_df = tidyparcel_df[~mask_fail].copy()
             # 1) how many parcels survive this check (True or MAYBE):
             n_remain = len(tidyparcel_df)
             pct_remain = n_remain / baseline_n * 100
@@ -172,11 +177,6 @@ def zoning_analysis_pipeline(
                 f"MAYBE: {n_maybe:4d} ({pct_maybe:5.1f}%)"
                 f"False: {n_false:4d} ({pct_false:5.1f}%)")
             print(f"{name} runtime: {time.time() - start:.1f} sec")
-            if not detailed_check:
-                mask_fail = tidyparcel_df[name] == False
-                df_fail = tidyparcel_df[mask_fail].copy()
-                false_dfs.append(df_fail)
-                tidyparcel_df = tidyparcel_df[~mask_fail].copy()
 
     # 4) Combine and summarize
     initial_df = pd.concat(false_dfs + [tidyparcel_df], ignore_index=True)
@@ -252,27 +252,6 @@ def zoning_analysis_pipeline(
                     )
                 if orig_allowed == True:
                     initial_df.at[idx, 'reason'] = "parcels fit the building"
-
-        # print the summary
-        vc       = initial_df.loc[to_run.index, 'check_footprint'].value_counts(dropna=False)
-        n_true   = vc.get(True,   0)
-        n_false  = vc.get(False,  0)
-        n_maybe  = vc.get('MAYBE', 0)
-        n_survive = n_true + n_maybe
-        pct_true   = n_true   / baseline_n * 100
-        pct_false  = n_false  / baseline_n * 100
-        pct_maybe  = n_maybe  / baseline_n * 100
-        pct_survive = n_survive / baseline_n * 100
-
-        print(f"{'check_footprint':20s}  "
-              f"Survive: {n_survive:4d}/{baseline_n:4d} ({pct_survive:5.1f}%)  "
-              f"True: {n_true:4d} ({pct_true:5.1f}%)  "
-              f"MAYBE: {n_maybe:4d} ({pct_maybe:5.1f}%)  "
-              f"False: {n_false:4d} ({pct_false:5.1f}%)")
-        # — downgrade non-confidence parcels to MAYBE —
-        mask_nc = (initial_df['confidence'] != 'confidence_parcel') & (initial_df['allowed'] == True)
-        initial_df.loc[mask_nc, 'allowed'] = 'MAYBE'
-        initial_df.loc[mask_nc, 'reason'] = "Initial check passed, but no footprint check"
         print(f"check_footprint runtime: {time.time() - fp_start:.1f} sec")
 
     # 5) Combine and summarize
