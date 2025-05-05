@@ -24,4 +24,4 @@ from .parcel_in_confidence import parcel_in_confidence
 from .parcel_in_nonconfidence import parcel_in_nonconfidence
 from .generate_parcel_info import generate_parcel_info
 from .compare_id_differences import compare_id_differences
-from .process_all_district import process_all_district
+from .process_all_districts import process_all_districts
