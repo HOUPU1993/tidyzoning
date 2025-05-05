@@ -300,4 +300,12 @@ def zoning_analysis_pipeline(
     else:
         print(f"{(final_df['allowed'] == True).sum()} / {len(final_df)} parcels allow the building")
         print(f"{(final_df['allowed'] == 'MAYBE').sum()} / {len(final_df)} parcels maybe allow the building")
+    
+    # Merge the output cvs DataFrame with the geometry from tidyparcel_geo_feeds
+    final_gdf = final_df.merge(tidyparcel_geo[tidyparcel_geo['side'] == 'centroid'][['parcel_id', 'geometry']], on='parcel_id', how='left')
+
+    # Convert the merged DataFrame into a GeoDataFrame
+    final_gdf = gpd.GeoDataFrame(final_gdf, geometry='geometry', crs=tidyparcel_geo.crs)
+    final_gdf
+
     return final_df
