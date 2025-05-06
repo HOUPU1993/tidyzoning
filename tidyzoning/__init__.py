@@ -25,3 +25,6 @@ from .parcel_in_nonconfidence import parcel_in_nonconfidence
 from .generate_parcel_info import generate_parcel_info
 from .compare_id_differences import compare_id_differences
 from .process_all_districts import process_all_districts
+from .read_dist import read_dist
+from .read_bldg import read_bldg
+from .read.pcl import read_pcl
