@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import geopandas as gpd
-from tidyzoning import find_district_idx
 from tidyzoning import check_land_use
 from tqdm import tqdm
 from joblib import Parallel, delayed
@@ -33,7 +32,6 @@ def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func, n_job
 
     # Step 4: Define processing function for one row
     def process_one_parcel(row):
-        prop_id = row['Prop_ID']
         parcel_id = row['parcel_id']
         zoning_idx = row['zoning_id']
         row_id = row['row_id']
@@ -43,7 +41,6 @@ def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func, n_job
         filtered_tidyzoning = tidyzoning_filtered.loc[[zoning_idx]]
         results = check_func(tidybuilding, filtered_tidyzoning, filtered_tidyparcel)
         results["parcel_id"] = parcel_id
-        results["Prop_ID"] = prop_id
         results["row_id"] = row_id  # Add row_id for ordering
         return results
 
