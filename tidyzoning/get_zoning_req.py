@@ -35,10 +35,21 @@ def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
                                 extracted_data.append(flattened_entry)
         district_constraints = pd.DataFrame(extracted_data)
 
-        # If no parcel data is provided
-        lot_width = tidyparcel["lot_width"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
-        lot_depth = tidyparcel["lot_depth"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
-        lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
+        if tidyparcel is None or tidyparcel.empty:
+            lot_width = None
+            lot_depth = None
+            lot_area = None
+        else:
+            centroid_row = tidyparcel[tidyparcel['side'] == 'centroid']
+            if not centroid_row.empty:
+                lot_width = centroid_row["lot_width"].iloc[0]
+                lot_depth = centroid_row["lot_depth"].iloc[0]
+                lot_area = centroid_row["lot_area"].iloc[0]
+            else:
+                lot_width = None
+                lot_depth = None
+                lot_area = None
+
 
         # Check the data from the tidybuilding
         bedrooms = None
