@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import geopandas as gpd
 from tidyzoning import check_land_use
+from tidyzoning import find_district_idx
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
@@ -27,7 +28,11 @@ def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func, n_job
     tidyzoning_filtered = tidyzoning[tidyzoning.index.isin(allowed_zoning_ids)]
 
     # Step 3: Filter tidyparcel based on allowed zoning IDs and add row_id
-    tidyparcel_filtered = tidyparcel[tidyparcel['zoning_id'].isin(tidyzoning_filtered.index)].reset_index(drop=True)
+    zoning_id = find_district_idx(tidyparcel,tidyzoning)
+    tidyparcel_dim = tidyparcel[tidyparcel['side'] == 'centroid'] # for the parcel_id, it is still unique
+    tidyparcel_dim_z = tidyparcel_dim.merge(zoning_id[['parcel_id','zoning_id']], on ='parcel_id', how = 'right') # for the parcel_id, maybe not unique
+    
+    tidyparcel_filtered = tidyparcel_dim_z[tidyparcel_dim_z['zoning_id'].isin(tidyzoning_filtered.index)].reset_index(drop=True)
     tidyparcel_filtered["row_id"] = tidyparcel_filtered.index
 
     # Step 4: Define processing function for one row
@@ -35,10 +40,10 @@ def check_zoning_process(tidybuilding, tidyzoning, tidyparcel, check_func, n_job
         parcel_id = row['parcel_id']
         zoning_idx = row['zoning_id']
         row_id = row['row_id']
-
-        filtered_tidyparcel = tidyparcel_filtered[tidyparcel_filtered['parcel_id'] == parcel_id]
-
-        filtered_tidyzoning = tidyzoning_filtered.loc[[zoning_idx]]
+        
+        filtered_tidyzoning = tidyzoning_filtered[tidyzoning_filtered['zoning_id'] == zoning_idx]
+        filtered_tidyparcel = tidyparcel_dim[tidyparcel_dim['parcel_id'] == parcel_id]
+        
         results = check_func(tidybuilding, filtered_tidyzoning, filtered_tidyparcel)
         results["parcel_id"] = parcel_id
         results["row_id"] = row_id  # Add row_id for ordering
