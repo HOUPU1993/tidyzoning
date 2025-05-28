@@ -37,8 +37,6 @@ def check_far(tidybuilding, tidyzoning, tidyparcel):
     else:
         return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note']) # Return an empty DataFrame
 
-
-
     # Calculate FAR for each Parcel_ID
     lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
     if lot_area is not None and lot_area != 0:
