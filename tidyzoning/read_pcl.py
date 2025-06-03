@@ -21,10 +21,6 @@ def read_pcl(path, dist, trans_crs="EPSG:3081"):
     parcel_gdf = parcel_gdf.to_crs(trans_crs)
     return parcel_gdf
 
-
-
-
-
 # import geopandas as gpd
 # from tidyzoning import find_district_idx
 
