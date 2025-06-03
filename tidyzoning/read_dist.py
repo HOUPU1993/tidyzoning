@@ -27,5 +27,6 @@ def read_dist(path, trans_crs="EPSG:3081", index_col="zoning_id"):
     # Apply filter to remove invalid geometries (NaN, str, None, malformed)
     dist_gdf = dist_gdf[dist_gdf.geometry.apply(lambda x: isinstance(x, valid_types) and not x.is_empty)]
     dist_gdf = dist_gdf.to_crs(trans_crs)
+    dist_gdf = dist_gdf.reset_index(drop=True)
     dist_gdf[index_col] = dist_gdf.index
     return dist_gdf
