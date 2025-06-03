@@ -29,4 +29,5 @@ def read_dist(path, trans_crs="EPSG:3081", index_col="zoning_id"):
     dist_gdf = dist_gdf.to_crs(trans_crs)
     dist_gdf = dist_gdf.reset_index(drop=True)
     dist_gdf[index_col] = dist_gdf.index
+    dist_gdf[index_col] = dist_gdf[index_col].astype(float)
     return dist_gdf
