@@ -1,7 +1,7 @@
 import geopandas as gpd
 from tidyzoning import unify_tidybuilding
 
-def read_bldg(path):
+def read_bldg(bldg_data_file=None, ozfs_data_file=None, bldg_data_string=None):
     """
     Reads a building folder and generate one-demensional dataset based on mutiple csv file.
 
@@ -15,5 +15,5 @@ def read_bldg(path):
     --------
     DataFrame
     """
-    build_df = unify_tidybuilding(path)
+    build_df = unify_tidybuilding(bldg_data_file=None, ozfs_data_file=None, bldg_data_string=None)
     return build_df
