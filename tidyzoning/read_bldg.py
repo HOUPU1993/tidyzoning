@@ -15,5 +15,5 @@ def read_bldg(bldg_data_file=None, ozfs_data_file=None, bldg_data_string=None):
     --------
     DataFrame
     """
-    build_df = unify_tidybuilding(bldg_data_file=None, ozfs_data_file=None, bldg_data_string=None)
+    build_df = unify_tidybuilding(bldg_data_file, ozfs_data_file, bldg_data_string)
     return build_df
