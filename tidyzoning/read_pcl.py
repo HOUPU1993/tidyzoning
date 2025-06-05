@@ -1,7 +1,6 @@
 import geopandas as gpd
 import os
 from tidyzoning import find_district_idx
-from tidyzoning.get_crs import get_crs
 
 def read_pcl(path, dist, trans_crs=None):
     """
@@ -29,16 +28,7 @@ def read_pcl(path, dist, trans_crs=None):
     if trans_crs is not None:
         target_crs = trans_crs
     else:
-        # get_crs() returns an integer EPSG code, e.g., 3081.
-        auto_epsg = get_crs(path, large_area=False)
-        target_crs = f"EPSG:{auto_epsg}"
-
-    dist_crs_str = dist.crs.to_string()
-    if dist_crs_str != target_crs:
-        raise ValueError(
-            f"CRS mismatch: district CRS is {dist_crs_str}, "
-            f"but target CRS is {target_crs}."
-        )
+        target_crs = dist.crs
 
     # 2. Reproject to the target CRS
     parcel_gdf = parcel_gdf.to_crs(target_crs)
