@@ -1,7 +1,7 @@
 import geopandas as gpd
 import os
 from shapely.geometry import Polygon, Point, LineString, MultiPolygon, MultiLineString
-from tidyzoning import get_crs
+from tidyzoning.get_crs import get_crs
 
 def read_dist(path, trans_crs=None, index_col="zoning_id"):
     """
