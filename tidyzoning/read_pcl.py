@@ -31,6 +31,7 @@ def read_pcl(path, dist, trans_crs=None):
         target_crs = dist.crs
 
     # 2. Reproject to the target CRS
+    parcel_gdf = gpd.read_file(path)
     parcel_gdf = parcel_gdf.to_crs(target_crs)
 
     # 3. Compute district index and merge results
