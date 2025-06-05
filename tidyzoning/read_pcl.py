@@ -33,6 +33,13 @@ def read_pcl(path, dist, trans_crs=None):
         auto_epsg = get_crs(path, large_area=False)
         target_crs = f"EPSG:{auto_epsg}"
 
+    dist_crs_str = dist.crs.to_string()
+    if dist_crs_str != target_crs:
+        raise ValueError(
+            f"CRS mismatch: district CRS is {dist_crs_str}, "
+            f"but target CRS is {target_crs}."
+        )
+
     # 2. Reproject to the target CRS
     parcel_gdf = parcel_gdf.to_crs(target_crs)
 
