@@ -1,4 +1,5 @@
 import geopandas as gpd
+import tidyzoning
 from tidyzoning import unify_tidybuilding
 
 def read_bldg(bldg_data_file=None, ozfs_data_file=None, bldg_data_string=None):
