@@ -31,3 +31,4 @@ from .read_pcl import read_pcl
 from .get_tidyparcel_dim import get_tidyparcel_dim
 from .get_tidyparcel_geo import get_tidyparcel_geo
 from .get_crs import get_crs
+from .get_variables import get_variables
