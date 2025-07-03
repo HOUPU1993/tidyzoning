@@ -3,7 +3,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import LineString
 from shapely.ops import unary_union, polygonize
-from tidyzoning import find_district_idx
+from zonepy import find_district_idx
 from tqdm import tqdm  
 
 def generate_parcel_info(tidyparcel, tidyzoning):
