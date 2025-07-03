@@ -3,7 +3,7 @@ import numpy as np
 from pint import UnitRegistry
 import geopandas as gpd
 from shapely.ops import unary_union, polygonize
-from tidyzoning import get_zoning_req
+from zonepy import get_zoning_req
 
 def check_unit_qty(tidybuilding, tidyzoning, tidyparcel=None):
     """

@@ -1,47 +1,48 @@
 import pandas as pd
 import numpy as np
-from pint import UnitRegistry
 import geopandas as gpd
-from shapely.ops import unary_union, polygonize
-from tidyzoning import get_zoning_req
+from zonepy import get_zoning_req
 
-def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
+def check_bedrooms(tidybuilding, tidyzoning, tidyparcel=None):
     """
-    Checks whether the lot_coverage of a given building complies with zoning constraints.
+    Checks whether the bedrooms of a given building complies with zoning constraints.
 
     Parameters:
     ----------
     tidybuilding : A GeoDataFrame containing information about a single building. 
-    tidyparcel : A GeoDataFrame containing information about the tidyparcels(single/multiple ). 
     tidyzoning : A GeoDataFrame containing zoning constraints. It may have multiple rows,
-
+    tidyparcel : Optional
+    
     Returns:
     -------
     DataFrame
         A DataFrame with the following columns:
-        - 'parcel_id': Identifier for the property (from `tidyparcel`).
         - 'zoning_id': The index of the corresponding row from `tidyzoning`.
-        - 'allowed': A boolean value indicating whether the building's lot coverage 
-    
+        - 'allowed': A boolean value indicating whether the building's bedrooms 
+        - 'constraint_min_note': The constraint note for the minimum value.
+        - 'constraint_max_note': The constraint note for the maximum value.
+        
     How to use:
-    check_lot_coverage_result = check_lot_coverage(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
+    check_bedrooms_result = check_bedrooms(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
-    ureg = UnitRegistry()
     results = []
-
-    # Calculate the floor area of the building
-    if len(tidybuilding['footprint']) == 1:
-        footprint = tidybuilding['footprint'].iloc[0]
+    # Check the data from the tidybuilding
+    bed_list = {
+        'units_0bed': 0,
+        'units_1bed': 1,
+        'units_2bed': 2,
+        'units_3bed': 3,
+        'units_4bed': 4
+    }
+    # find units_Xbed column in tidybuilding
+    matching_beds = [bed_list[col] for col in tidybuilding.columns if col in bed_list]
+    # find min_beds and max_beds
+    if matching_beds:
+        min_beds = min(matching_beds)
+        max_beds = max(matching_beds)
     else:
         return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note']) # Return an empty DataFrame
-    
-    # Calculate lot_coverage for each parcel_id
-    lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
-    if lot_area is not None and lot_area != 0:
-        lot_coverage = (footprint / (lot_area * 43560)) * 100
-    else:
-        lot_coverage = 0  # or maybe 0 or np.nan depending on your context
-        
+
     # Iterate through each row in tidyzoning
     for index, zoning_row in tidyzoning.iterrows():
         zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)  # ✅ Fix the issue of passing Series
@@ -54,15 +55,15 @@ def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
         if zoning_req is None or zoning_req.empty:
             results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
             continue
-        # Check if zoning constraints include 'lot_cov_bldg'
-        if 'lot_cov_bldg' in zoning_req['spec_type'].values:
-            lot_coverage_row = zoning_req[zoning_req['spec_type'] == 'lot_cov_bldg']
-            min_lot_coverage = lot_coverage_row['min_value'].values[0]  # Extract min values
-            max_lot_coverage = lot_coverage_row['max_value'].values[0]  # Extract max values
-            min_select = lot_coverage_row['min_select'].values[0]  # Extract min select info
-            max_select = lot_coverage_row['max_select'].values[0]  # Extract max select info
-            constraint_min_note = lot_coverage_row['constraint_min_note'].values[0] # Extract min constraint note
-            constraint_max_note = lot_coverage_row['constraint_max_note'].values[0] # Extract max constraint note
+        # Check if zoning constraints include 'bedrooms'
+        if 'bedrooms' in zoning_req['spec_type'].values:
+            bedrooms_row = zoning_req[zoning_req['spec_type'] == 'bedrooms']
+            min_bedrooms = bedrooms_row['min_value'].values[0]  # Extract min values
+            max_bedrooms = bedrooms_row['max_value'].values[0]  # Extract max values
+            min_select = bedrooms_row['min_select'].values[0]  # Extract min select info
+            max_select = bedrooms_row['max_select'].values[0]  # Extract max select info
+            constraint_min_note = bedrooms_row['constraint_min_note'].values[0] # Extract min constraint note
+            constraint_max_note = bedrooms_row['constraint_max_note'].values[0] # Extract max constraint note
             
             # If min_select or max_select is 'OZFS Error', default to allowed
             if min_select == 'OZFS Error' or max_select == 'OZFS Error':
@@ -70,26 +71,26 @@ def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
                 continue
 
             # Handle NaN values and list
-            # Handle min_lot_coverage
-            if not isinstance(min_lot_coverage, list):
-                min_lot_coverage = [0] if min_lot_coverage is None or pd.isna(min_lot_coverage) or isinstance(min_lot_coverage, str) else [min_lot_coverage]
+            # Handle min_bedrooms
+            if not isinstance(min_bedrooms, list):
+                min_bedrooms = [0] if min_bedrooms is None or pd.isna(min_bedrooms) or isinstance(min_bedrooms, str) else [min_bedrooms]
             else:
                 # Filter out NaN and None values, ensuring at least one valid value
-                min_lot_coverage = [v for v in min_lot_coverage if pd.notna(v) and v is not None and not isinstance(v, str)]
-                if not min_lot_coverage:  # If all values are NaN or None, replace with default value
-                    min_lot_coverage = [0]
-            # Handle max_lot_coverage
-            if not isinstance(max_lot_coverage, list):
-                max_lot_coverage = [100] if max_lot_coverage is None or pd.isna(max_lot_coverage) or isinstance(max_lot_coverage, str) else [max_lot_coverage]
+                min_bedrooms = [v for v in min_bedrooms if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not min_bedrooms:  # If all values are NaN or None, replace with default value
+                    min_bedrooms = [0]
+            # Handle max_bedrooms
+            if not isinstance(max_bedrooms, list):
+                max_bedrooms = [100] if max_bedrooms is None or pd.isna(max_bedrooms) or isinstance(max_bedrooms, str) else [max_bedrooms]
             else:
                 # Filter out NaN and None values, ensuring at least one valid value
-                max_lot_coverage = [v for v in max_lot_coverage if pd.notna(v) and v is not None and not isinstance(v, str)]
-                if not max_lot_coverage:  # If all values are NaN or None, replace with default value
-                    max_lot_coverage = [100]
+                max_bedrooms = [v for v in max_bedrooms if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not max_bedrooms:  # If all values are NaN or None, replace with default value
+                    max_bedrooms = [100]
             
             # Check min condition
-            min_check_1 = min(min_lot_coverage) <= lot_coverage
-            min_check_2 = max(min_lot_coverage) <= lot_coverage
+            min_check_1 = min(min_bedrooms) <= min_beds
+            min_check_2 = max(min_bedrooms) <= min_beds
             if min_select in ["either", None]:
                 min_allowed = min_check_1 or min_check_2
             elif min_select == "unique":
@@ -101,8 +102,8 @@ def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
                     min_allowed = "MAYBE"
             
             # Check max condition
-            max_check_1 = min(max_lot_coverage) >= lot_coverage
-            max_check_2 = max(max_lot_coverage) >= lot_coverage
+            max_check_1 = min(max_bedrooms) >= max_beds
+            max_check_2 = max(max_bedrooms) >= max_beds
             if max_select in ["either", None]:
                 max_allowed = max_check_1 or max_check_2
             elif max_select == "unique":
@@ -123,5 +124,4 @@ def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
         else:
             results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})  # If zoning has no constraints, default to True
 
-    # Return a DataFrame containing the results for all zoning_ids
     return pd.DataFrame(results)

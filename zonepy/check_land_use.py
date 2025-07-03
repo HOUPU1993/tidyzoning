@@ -1,5 +1,5 @@
 import pandas as pd
-from tidyzoning import find_bldg_type
+from zonepy import find_bldg_type
 
 def check_land_use(tidybuilding, tidyzoning, tidyparcel=None):
     """

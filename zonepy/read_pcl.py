@@ -1,6 +1,6 @@
 import geopandas as gpd
 import os
-from tidyzoning import find_district_idx
+from zonepy import find_district_idx
 
 def read_pcl(path, dist, trans_crs=None):
     """

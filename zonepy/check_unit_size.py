@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import geopandas as gpd
 from shapely.ops import unary_union, polygonize
-from tidyzoning import get_zoning_req
-from tidyzoning import find_bldg_type
+from zonepy import get_zoning_req
+from zonepy import find_bldg_type
 import re
 
 '''Part I: Only check unit size avg'''

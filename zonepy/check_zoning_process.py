@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import geopandas as gpd
-from tidyzoning import check_land_use
+from zonepy import check_land_use
 from tqdm import tqdm
 from joblib import Parallel, delayed
 

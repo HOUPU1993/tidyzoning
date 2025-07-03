@@ -2,45 +2,40 @@ import pandas as pd
 import numpy as np
 from pint import UnitRegistry
 import geopandas as gpd
-from tidyzoning import get_zoning_req
+from shapely.ops import unary_union, polygonize
+from zonepy import get_zoning_req
 
-def check_fl_area(tidybuilding, tidyzoning, tidyparcel=None):
+def check_height(tidybuilding, tidyzoning, tidyparcel=None):
     """
-    Checks whether the floor area of a given building complies with zoning constraints.
+    Checks whether the building height of a given building complies with zoning constraints.
 
     Parameters:
     ----------
-    tidybuilding : GeoDataFrame
-        A GeoDataFrame containing information about a single building. 
-        It must have at least one of the following:
-        - 'gross_fl_area' column: Directly specifying the building's floor area.
-    tidyzoning : GeoDataFrame
-        A GeoDataFrame containing zoning constraints. It may have multiple rows,
-        each representing a different zoning rule that applies to the given building.
+    tidybuilding : A GeoDataFrame containing information about a single building. 
+    tidyzoning : A GeoDataFrame containing zoning constraints. It may have multiple rows,
     tidyparcel : Optional
     
     Returns:
     -------
     DataFrame
-        A DataFrame with two columns:
+        A DataFrame with the following columns:
         - 'zoning_id': The index of the corresponding row from `tidyzoning`.
-        - 'allowed': A boolean value indicating whether the building's floor area 
-          complies with the zoning regulations (True if compliant, False otherwise).
+        - 'allowed': A boolean value indicating whether the building's Height
         - 'constraint_min_note': The constraint note for the minimum value.
         - 'constraint_max_note': The constraint note for the maximum value.
-    
+        
     How to use:
-    check_fl_area_result = check_fl_area(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
+    check_height_result = check_height(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     ureg = UnitRegistry()
     results = []
 
     # Calculate the floor area of the building
-    if len(tidybuilding['gross_fl_area']) == 1:
-        fl_area = tidybuilding['gross_fl_area'].iloc[0]
+    if len(tidybuilding['height']) == 1:
+        height = tidybuilding['height'].iloc[0]
     else:
         return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note']) # Return an empty DataFrame
-
+    
     # Iterate through each row in tidyzoning
     for index, zoning_row in tidyzoning.iterrows():
         zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)  # ✅ Fix the issue of passing Series
@@ -53,15 +48,15 @@ def check_fl_area(tidybuilding, tidyzoning, tidyparcel=None):
         if zoning_req is None or zoning_req.empty:
             results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
             continue
-        # Check if zoning constraints include 'fl_area'
-        if 'fl_area' in zoning_req['spec_type'].values:
-            fl_area_row = zoning_req[zoning_req['spec_type'] == 'fl_area']
-            min_fl_area = fl_area_row['min_value'].values[0]  # Extract min values
-            max_fl_area = fl_area_row['max_value'].values[0]  # Extract max values
-            min_select = fl_area_row['min_select'].values[0]  # Extract min select info
-            max_select = fl_area_row['max_select'].values[0]  # Extract max select info
-            constraint_min_note = fl_area_row['constraint_min_note'].values[0] # Extract min constraint note
-            constraint_max_note = fl_area_row['constraint_max_note'].values[0] # Extract max constraint note
+        # Check if zoning constraints include 'height'
+        if 'height' in zoning_req['spec_type'].values:
+            height_row = zoning_req[zoning_req['spec_type'] == 'height']
+            min_height = height_row['min_value'].values[0]  # Extract min values
+            max_height = height_row['max_value'].values[0]  # Extract max values
+            min_select = height_row['min_select'].values[0]  # Extract min select info
+            max_select = height_row['max_select'].values[0]  # Extract max select info
+            constraint_min_note = height_row['constraint_min_note'].values[0] # Extract min constraint note
+            constraint_max_note = height_row['constraint_max_note'].values[0] # Extract max constraint note
             
             # If min_select or max_select is 'OZFS Error', default to allowed
             if min_select == 'OZFS Error' or max_select == 'OZFS Error':
@@ -69,39 +64,38 @@ def check_fl_area(tidybuilding, tidyzoning, tidyparcel=None):
                 continue
 
             # Handle NaN values and list
-            # Handle min_fl_area
-            if not isinstance(min_fl_area, list):
-                min_fl_area = [0] if min_fl_area is None or pd.isna(min_fl_area) or isinstance(min_fl_area, str) else [min_fl_area]
+            # Handle min_height
+            if not isinstance(min_height, list):
+                min_height = [0] if min_height is None or pd.isna(min_height) or isinstance(min_height, str) else [min_height]
             else:
                 # Filter out NaN and None values, ensuring at least one valid value
-                min_fl_area = [v for v in min_fl_area if pd.notna(v) and v is not None and not isinstance(v, str)]
-                if not min_fl_area:  # If all values are NaN or None, replace with default value
-                    min_fl_area = [0]
-            # Handle max_fl_area
-            if not isinstance(max_fl_area, list):
-                max_fl_area = [1000000] if max_fl_area is None or pd.isna(max_fl_area) or isinstance(max_fl_area, str) else [max_fl_area]
+                min_height = [v for v in min_height if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not min_height:  # If all values are NaN or None, replace with default value
+                    min_height = [0]
+            # Handle max_height
+            if not isinstance(max_height, list):
+                max_height = [1000000] if max_height is None or pd.isna(max_height) or isinstance(max_height, str) else [max_height]
             else:
                 # Filter out NaN and None values, ensuring at least one valid value
-                max_fl_area = [v for v in max_fl_area if pd.notna(v) and v is not None and not isinstance(v, str)]
-                if not max_fl_area:  # If all values are NaN or None, replace with default value
-                    max_fl_area = [1000000]
+                max_height = [v for v in max_height if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not max_height:  # If all values are NaN or None, replace with default value
+                    max_height = [1000000]
 
             # Get the unit and convert
-            unit_column = fl_area_row['unit'].values[0]  # Extract the unit of the specific row
+            unit_column = height_row['unit'].values[0]  # Extract the unit of the specific row
             # Define the unit mapping
             unit_mapping = {
-                "square feet": ureg('ft^2'),
-                "square meters": ureg('m^2'),
-                "acres": ureg('acre')
+                "feet": ureg('ft'),
+                "meters": ureg('m'),
             }
-            target_unit = unit_mapping.get(unit_column, ureg('ft^2'))  # Convert the unit of the specific row to a unit recognized by pint, default is ft^2 if no unit
-            # Ensure min/max_fl_area has the correct unit 'ft^2'
-            min_fl_area = [ureg.Quantity(v, target_unit).to('ft^2').magnitude for v in min_fl_area]
-            max_fl_area = [ureg.Quantity(v, target_unit).to('ft^2').magnitude for v in max_fl_area]
+            target_unit = unit_mapping.get(unit_column, ureg('ft'))  # Convert the unit of the specific row to a unit recognized by pint, default is ft^2 if no unit
+            # Ensure min/max_height has the correct unit 'ft^2'
+            min_height = [ureg.Quantity(v, target_unit).to('ft').magnitude for v in min_height]
+            max_height = [ureg.Quantity(v, target_unit).to('ft').magnitude for v in max_height]
 
             # Check min condition
-            min_check_1 = min(min_fl_area) <= fl_area
-            min_check_2 = max(min_fl_area) <= fl_area
+            min_check_1 = min(min_height) <= height
+            min_check_2 = max(min_height) <= height
             if min_select in ["either", None]:
                 min_allowed = min_check_1 or min_check_2
             elif min_select == "unique":
@@ -113,8 +107,8 @@ def check_fl_area(tidybuilding, tidyzoning, tidyparcel=None):
                     min_allowed = "MAYBE"
             
             # Check max condition
-            max_check_1 = min(max_fl_area) >= fl_area
-            max_check_2 = max(max_fl_area) >= fl_area
+            max_check_1 = min(max_height) >= height
+            max_check_2 = max(max_height) >= height
             if max_select in ["either", None]:
                 max_allowed = max_check_1 or max_check_2
             elif max_select == "unique":

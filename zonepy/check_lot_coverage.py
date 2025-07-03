@@ -3,39 +3,45 @@ import numpy as np
 from pint import UnitRegistry
 import geopandas as gpd
 from shapely.ops import unary_union, polygonize
-from tidyzoning import get_zoning_req
+from zonepy import get_zoning_req
 
-def check_height(tidybuilding, tidyzoning, tidyparcel=None):
+def check_lot_coverage(tidybuilding, tidyzoning, tidyparcel):
     """
-    Checks whether the building height of a given building complies with zoning constraints.
+    Checks whether the lot_coverage of a given building complies with zoning constraints.
 
     Parameters:
     ----------
     tidybuilding : A GeoDataFrame containing information about a single building. 
+    tidyparcel : A GeoDataFrame containing information about the tidyparcels(single/multiple ). 
     tidyzoning : A GeoDataFrame containing zoning constraints. It may have multiple rows,
-    tidyparcel : Optional
-    
+
     Returns:
     -------
     DataFrame
         A DataFrame with the following columns:
+        - 'parcel_id': Identifier for the property (from `tidyparcel`).
         - 'zoning_id': The index of the corresponding row from `tidyzoning`.
-        - 'allowed': A boolean value indicating whether the building's Height
-        - 'constraint_min_note': The constraint note for the minimum value.
-        - 'constraint_max_note': The constraint note for the maximum value.
-        
+        - 'allowed': A boolean value indicating whether the building's lot coverage 
+    
     How to use:
-    check_height_result = check_height(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
+    check_lot_coverage_result = check_lot_coverage(tidybuilding_4_fam, tidyzoning, tidyparcel[tidyparcel['parcel_id'] == '10'])
     """
     ureg = UnitRegistry()
     results = []
 
     # Calculate the floor area of the building
-    if len(tidybuilding['height']) == 1:
-        height = tidybuilding['height'].iloc[0]
+    if len(tidybuilding['footprint']) == 1:
+        footprint = tidybuilding['footprint'].iloc[0]
     else:
         return pd.DataFrame(columns=['zoning_id', 'allowed', 'constraint_min_note', 'constraint_max_note']) # Return an empty DataFrame
     
+    # Calculate lot_coverage for each parcel_id
+    lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
+    if lot_area is not None and lot_area != 0:
+        lot_coverage = (footprint / (lot_area * 43560)) * 100
+    else:
+        lot_coverage = 0  # or maybe 0 or np.nan depending on your context
+        
     # Iterate through each row in tidyzoning
     for index, zoning_row in tidyzoning.iterrows():
         zoning_req = get_zoning_req(tidybuilding, zoning_row.to_frame().T, tidyparcel)  # ✅ Fix the issue of passing Series
@@ -48,15 +54,15 @@ def check_height(tidybuilding, tidyzoning, tidyparcel=None):
         if zoning_req is None or zoning_req.empty:
             results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})
             continue
-        # Check if zoning constraints include 'height'
-        if 'height' in zoning_req['spec_type'].values:
-            height_row = zoning_req[zoning_req['spec_type'] == 'height']
-            min_height = height_row['min_value'].values[0]  # Extract min values
-            max_height = height_row['max_value'].values[0]  # Extract max values
-            min_select = height_row['min_select'].values[0]  # Extract min select info
-            max_select = height_row['max_select'].values[0]  # Extract max select info
-            constraint_min_note = height_row['constraint_min_note'].values[0] # Extract min constraint note
-            constraint_max_note = height_row['constraint_max_note'].values[0] # Extract max constraint note
+        # Check if zoning constraints include 'lot_cov_bldg'
+        if 'lot_cov_bldg' in zoning_req['spec_type'].values:
+            lot_coverage_row = zoning_req[zoning_req['spec_type'] == 'lot_cov_bldg']
+            min_lot_coverage = lot_coverage_row['min_value'].values[0]  # Extract min values
+            max_lot_coverage = lot_coverage_row['max_value'].values[0]  # Extract max values
+            min_select = lot_coverage_row['min_select'].values[0]  # Extract min select info
+            max_select = lot_coverage_row['max_select'].values[0]  # Extract max select info
+            constraint_min_note = lot_coverage_row['constraint_min_note'].values[0] # Extract min constraint note
+            constraint_max_note = lot_coverage_row['constraint_max_note'].values[0] # Extract max constraint note
             
             # If min_select or max_select is 'OZFS Error', default to allowed
             if min_select == 'OZFS Error' or max_select == 'OZFS Error':
@@ -64,38 +70,26 @@ def check_height(tidybuilding, tidyzoning, tidyparcel=None):
                 continue
 
             # Handle NaN values and list
-            # Handle min_height
-            if not isinstance(min_height, list):
-                min_height = [0] if min_height is None or pd.isna(min_height) or isinstance(min_height, str) else [min_height]
+            # Handle min_lot_coverage
+            if not isinstance(min_lot_coverage, list):
+                min_lot_coverage = [0] if min_lot_coverage is None or pd.isna(min_lot_coverage) or isinstance(min_lot_coverage, str) else [min_lot_coverage]
             else:
                 # Filter out NaN and None values, ensuring at least one valid value
-                min_height = [v for v in min_height if pd.notna(v) and v is not None and not isinstance(v, str)]
-                if not min_height:  # If all values are NaN or None, replace with default value
-                    min_height = [0]
-            # Handle max_height
-            if not isinstance(max_height, list):
-                max_height = [1000000] if max_height is None or pd.isna(max_height) or isinstance(max_height, str) else [max_height]
+                min_lot_coverage = [v for v in min_lot_coverage if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not min_lot_coverage:  # If all values are NaN or None, replace with default value
+                    min_lot_coverage = [0]
+            # Handle max_lot_coverage
+            if not isinstance(max_lot_coverage, list):
+                max_lot_coverage = [100] if max_lot_coverage is None or pd.isna(max_lot_coverage) or isinstance(max_lot_coverage, str) else [max_lot_coverage]
             else:
                 # Filter out NaN and None values, ensuring at least one valid value
-                max_height = [v for v in max_height if pd.notna(v) and v is not None and not isinstance(v, str)]
-                if not max_height:  # If all values are NaN or None, replace with default value
-                    max_height = [1000000]
-
-            # Get the unit and convert
-            unit_column = height_row['unit'].values[0]  # Extract the unit of the specific row
-            # Define the unit mapping
-            unit_mapping = {
-                "feet": ureg('ft'),
-                "meters": ureg('m'),
-            }
-            target_unit = unit_mapping.get(unit_column, ureg('ft'))  # Convert the unit of the specific row to a unit recognized by pint, default is ft^2 if no unit
-            # Ensure min/max_height has the correct unit 'ft^2'
-            min_height = [ureg.Quantity(v, target_unit).to('ft').magnitude for v in min_height]
-            max_height = [ureg.Quantity(v, target_unit).to('ft').magnitude for v in max_height]
-
+                max_lot_coverage = [v for v in max_lot_coverage if pd.notna(v) and v is not None and not isinstance(v, str)]
+                if not max_lot_coverage:  # If all values are NaN or None, replace with default value
+                    max_lot_coverage = [100]
+            
             # Check min condition
-            min_check_1 = min(min_height) <= height
-            min_check_2 = max(min_height) <= height
+            min_check_1 = min(min_lot_coverage) <= lot_coverage
+            min_check_2 = max(min_lot_coverage) <= lot_coverage
             if min_select in ["either", None]:
                 min_allowed = min_check_1 or min_check_2
             elif min_select == "unique":
@@ -107,8 +101,8 @@ def check_height(tidybuilding, tidyzoning, tidyparcel=None):
                     min_allowed = "MAYBE"
             
             # Check max condition
-            max_check_1 = min(max_height) >= height
-            max_check_2 = max(max_height) >= height
+            max_check_1 = min(max_lot_coverage) >= lot_coverage
+            max_check_2 = max(max_lot_coverage) >= lot_coverage
             if max_select in ["either", None]:
                 max_allowed = max_check_1 or max_check_2
             elif max_select == "unique":
@@ -129,4 +123,5 @@ def check_height(tidybuilding, tidyzoning, tidyparcel=None):
         else:
             results.append({'zoning_id': index, 'allowed': True, 'constraint_min_note': None, 'constraint_max_note': None})  # If zoning has no constraints, default to True
 
+    # Return a DataFrame containing the results for all zoning_ids
     return pd.DataFrame(results)

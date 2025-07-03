@@ -14,30 +14,30 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 # input my libraries
-from tidyzoning import find_district_idx
-from tidyzoning import find_bldg_type
-from tidyzoning import check_land_use
-from tidyzoning import get_zoning_req
-from tidyzoning import check_fl_area
-from tidyzoning import check_far
-from tidyzoning import check_height
-from tidyzoning import check_stories
-from tidyzoning import check_bedrooms
-from tidyzoning import check_lot_coverage
-from tidyzoning import check_unit_density
-from tidyzoning import check_height_eave
-from tidyzoning import check_unit_qty
-from tidyzoning import add_setbacks
-from tidyzoning import get_buildable_area
-from tidyzoning import unify_tidybuilding
-from tidyzoning import filter_constraints
-from tidyzoning import check_zoning_process
-from tidyzoning import parcels_in_zoning
-from tidyzoning import parcel_in_confidence
-from tidyzoning import generate_parcel_info
+from zonepy import find_district_idx
+from zonepy import find_bldg_type
+from zonepy import check_land_use
+from zonepy import get_zoning_req
+from zonepy import check_fl_area
+from zonepy import check_far
+from zonepy import check_height
+from zonepy import check_stories
+from zonepy import check_bedrooms
+from zonepy import check_lot_coverage
+from zonepy import check_unit_density
+from zonepy import check_height_eave
+from zonepy import check_unit_qty
+from zonepy import add_setbacks
+from zonepy import get_buildable_area
+from zonepy import unify_tidybuilding
+from zonepy import filter_constraints
+from zonepy import check_zoning_process
+from zonepy import parcels_in_zoning
+from zonepy import parcel_in_confidence
+from zonepy import generate_parcel_info
 
-from tidyzoning.check_footprint import check_footprint
-from tidyzoning.check_unit_size import check_unit_size
+from zonepy.check_footprint import check_footprint
+from zonepy.check_unit_size import check_unit_size
 
 def zoning_analysis_pipeline(
     tidybuilding,
