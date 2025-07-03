@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="tidyzoning",  
-    version="0.1.0",  
-    description="A Python package for OZFS zoning analysis",  
+    name="zonepy",  
+    version="0.5.0",  
+    description="A Python package for zoning analysis",  
     long_description=open("README.md").read(),  
     long_description_content_type="text/markdown",  
     author="Houpu Li",  
     author_email="houpu_li@gsd.harvard.edu", 
-    url="https://github.com/HOUPU1993/tidyzoning",  
+    url="https://github.com/HOUPU1993/zonepy",  
     license="MIT",  
     packages=find_packages(),  
     include_package_data=True,  
