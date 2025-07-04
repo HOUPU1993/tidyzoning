@@ -1,239 +1,123 @@
-import geopandas as gpd
+import json
 import pandas as pd
-from shapely.ops import unary_union, polygonize
-import random
-from zonepy import find_bldg_type
 
-def get_zoning_req(tidybuilding, tidyzoning, tidyparcel=None):
+def get_zoning_req(district_data, bldg_data=None, parcel_data=None, zoning_data=None, vars=None):
     """
-    Process building, zoning, and parcel information to generate structured Zoning requirement data.
-    
-    :param tidybuilding: Building data (DataFrame)
-    :param tidyzoning: Zoning data (DataFrame)
-    :param tidyparcel: Parcel data (GeoDataFrame), optional
-    :return: DataFrame containing all calculated results
-    :How to use: get_zoning_req_results = get_zoning_req(tidybuilding_4_fam, tidyzoning.loc[[2]], tidyparcel[tidyparcel['parcel_id'] == '10'])
+    List zoning requirement values for a given building, parcel, and district.
+
+    Parameters:
+    - district_data: dict-like with a 'constraints' JSON string field
+    - bldg_data, parcel_data, zoning_data: inputs for get_variables if vars not provided
+    - vars: dict of precomputed variables from get_variables()
+
+    Returns:
+    - pandas.DataFrame with columns:
+        constraint_name, min_value, max_value, min_val_error, max_val_error
+      or a message string if no constraints.
     """
-    def zoning_extract(tidybuilding, tidyzoning, tidyparcel=None):
-        columns_to_extract = ['structure_constraints', 'other_constraints', 'lot_constraints']
-        extracted_data = []
-        
-        for col in columns_to_extract:
-            for index, row in tidyzoning.iterrows():
-                constraints = row[col]
-                if isinstance(constraints, dict):  
-                    for constraint_type, entries in constraints.items():
-                        if isinstance(entries, list):  
-                            for entry in entries:
-                                flattened_entry = {
-                                    "original_index": index,
-                                    "source_column": col,
-                                    "constraint_type": constraint_type,
-                                }
-                                for key, value in entry.items():  
-                                    flattened_entry[key] = value
-                                extracted_data.append(flattened_entry)
-        district_constraints = pd.DataFrame(extracted_data)
+    # 1. Load constraints JSON
+    district = district_data.iloc[0]
+    constraints_series = district.get('constraints')
+    constraints_dict = dict(constraints_series)
+    if not constraints_dict or constraints_dict in ("NA",):
+        return "No zoning requirements recorded for this district"
 
-        # If no parcel data is provided
-        lot_width = tidyparcel["lot_width"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
-        lot_depth = tidyparcel["lot_depth"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
-        lot_area = tidyparcel["lot_area"].iloc[0] if tidyparcel is not None and not tidyparcel.empty else None
+    # 2. Load variables or computer if needed
+    if vars is None:
+        vars = get_variables(bldg_data, parcel_data, district_data, zoning_data)
+    # Ensure we have a plain dict for eval context
+    vars_dict = dict(vars)
 
-        # Check the data from the tidybuilding
-        bedrooms = None
-        total_bedrooms = tidybuilding.get('total_bedrooms', [None])[0]
-        units_0bed = tidybuilding['units_0bed'].sum() if 'units_0bed' in tidybuilding.columns else 0
-        units_1bed = tidybuilding['units_1bed'].sum() if 'units_1bed' in tidybuilding.columns else 0
-        units_2bed = tidybuilding['units_2bed'].sum() if 'units_2bed' in tidybuilding.columns else 0
-        units_3bed = tidybuilding['units_3bed'].sum() if 'units_3bed' in tidybuilding.columns else 0
-        units_4bed = tidybuilding['units_4bed'].sum() if 'units_4bed' in tidybuilding.columns else 0
-        total_units = tidybuilding.get('total_units', [None])[0]
-        fl_area = tidybuilding.get('gross_fl_area', [None])[0]
-        height = tidybuilding.get('height', [None])[0]
-        height_eave = tidybuilding.get('height_eave', [None])[0]
-        floors = tidybuilding.get('stories', [None])[0]
-        min_unit_size = tidybuilding.get('min_unit_size', [None])[0]
-        max_unit_size = tidybuilding.get('max_unit_size', [None])[0]
-        parking_enclosed = tidybuilding.get('parking_enclosed', [None])[0]
-        parking_covered = tidybuilding.get('parking_covered', [None])[0]
-        parking_uncovered = tidybuilding.get('parking_uncovered', [None])[0]
-        parking_floors = tidybuilding.get('parking_floors', [None])[0]
-        parking_bel_grade = tidybuilding.get('parking_bel_grade', [None])[0]
-        garage_entry = tidybuilding.get('garage_entry', [None])[0]
-        units_floor1 = tidybuilding.get('units_floor1', [None])[0]
-        units_floor2 = tidybuilding.get('units_floor2', [None])[0]
-        units_floor3 = tidybuilding.get('units_floor3', [None])[0]
-        bldg_width = tidybuilding.get('width', [None])[0]
-        bldg_dpth  = tidybuilding.get('depth', [None])[0]
-        far = fl_area / lot_area if lot_area is not None else None
+    def _process_val_list(val_list):
+        """Return (value, note) for a list of constraint entries."""
+        if not val_list:
+            return None, None
+        true_id = None
+        maybe_ids = []
+        note = None
 
-        return {
-            # From tidyzoning
-            "district_constraints": district_constraints, 
-            # From tidyparcel
-            "lot_width": lot_width, 
-            "lot_depth": lot_depth,
-            "lot_area": lot_area,
-            # From tidybuilding
-            "bedrooms": bedrooms, 
-            "total_bedrooms": total_bedrooms,
-            "units_0bed": units_0bed,
-            "units_1bed": units_1bed,
-            "units_2bed": units_2bed,
-            "units_3bed": units_3bed,
-            "units_4bed": units_4bed,
-            "total_units": total_units,
-            "fl_area": fl_area,
-            "height": height,
-            "height_eave": height_eave,
-            "floors": floors,
-            "min_unit_size": min_unit_size,
-            "max_unit_size": max_unit_size,
-            "parking_enclosed": parking_enclosed,
-            "parking_covered": parking_covered,
-            "parking_uncovered": parking_uncovered,
-            "parking_floors": parking_floors,
-            "parking_bel_grade": parking_bel_grade,
-            "garage_entry": garage_entry,
-            "units_floor1": units_floor1,
-            "units_floor2": units_floor2,
-            "units_floor3": units_floor3,
-            "bldg_width": bldg_width,
-            "bldg_dpth": bldg_dpth,
-            # Combined tidy zoning and tidyparcel together
-            "far": far   
-        }
-
-    def evaluate_conditions_and_expressions(rules, context):
-        # If rules is a dict, like {'expression': '30'}
-        if isinstance(rules, dict) and "expression" in rules:  
-            # If the expression is "NA" or other non-numeric string, return None
-            if str(rules["expression"]).strip().upper() == "NA":
-                return None, None, None  
-            try:
-                return eval(str(rules["expression"]), {}, context), None, None
-            except Exception:
-                return "OZFS Error", None, None
-        # If rules is a list, like [{'conditions': ['bedrooms== 0'], 'expression': 500}, {'conditions': ['bedrooms == 1'], 'expression': 700}]
-        if not isinstance(rules, list):  
-            return None, None, None
-        
-        all_results = []
-        constraint_note = None
-        select_value = None
-        
-        for rule in rules:
-            conditions = rule.get("conditions", [])  # List: [{condition_1, expression_1},{condition_2, expression_2}]
-            if isinstance(conditions, str):
-                conditions = [conditions]
-            expression = rule.get("expression", None)  # Single string: {'expression': '30'}
-            expressions_list = rule.get("expressions", [])  # List: [{'expression_1': '10'}.{'expression_2': '20'}.select:"min"]
-            logical_operator = rule.get("logical_operator", None)  # Single string: [And/Or]
-            select = rule.get("select", None)  # List: [min, max, unique, either]
-            select_info = rule.get("select_info", None) # specific select information
-            
-            if select:
-                select_value = select
-            try:
-                '''If logical_operator exists, calculate conditions_met according to AND / OR logic.
-                   If conditions exist but logical_operator does not, still calculate conditions_met.
-                   If conditions are empty, default conditions_met = True (for expressions_list).'''
-                if conditions:
-                    if logical_operator == "AND":
-                        conditions_met = all(eval(cond, {}, context) for cond in conditions)
-                    elif logical_operator == "OR":
-                        conditions_met = any(eval(cond, {}, context) for cond in conditions)
-                    else:
-                        conditions_met = all(eval(cond, {}, context) for cond in conditions)  # No `logical_operator`, default `AND`
+        # Find the matching entry by evaluating conditions
+        for idx, item in enumerate(val_list):
+            conds = item.get('condition')
+            # 1) Single item and no condition → select directly
+            if conds is None and len(val_list) == 1:
+                true_id = idx
+                break
+            # 2) Multiple items but no condition → add a note
+            elif conds is None:
+                note = "No condition field despite multiple array items"
+            # 3) Single item but has a condition → also add a note
+            elif len(val_list) == 1 and conds is not None:
+                note = "Condition given despite a single array item"
+            else:
+                results = []
+                for cond in conds:
+                    try:
+                        results.append(eval(cond, vars_dict))
+                    except:
+                        results.append("MAYBE")
+                if all(r is True for r in results):
+                    true_id = idx
+                    break
+                elif any(r is False for r in results):
+                    continue
                 else:
-                    conditions_met = True  # If no `conditions`, default to allow execution (for `expressions_list`)
+                    maybe_ids.append(idx)
 
-                # Handle single `expression`
-                if conditions_met and expression:
-                    result = eval(str(expression), {}, context)
-                    all_results.append(result)
+        selected_ids = [true_id] if true_id is not None else maybe_ids
+        if not selected_ids:
+            return None, "No constraint conditions met"
 
-                # Handle `expressions_list` (can execute even without `conditions`)
-                if expressions_list:
-                    temp_results = [eval(str(expr), {}, context) for expr in expressions_list]
+        # Evaluate expressions for selected entries
+        values = []
+        for idx in selected_ids:
+            expressions = val_list[idx].get('expression', [])
+            for expr in expressions:
+                try:
+                    values.append(eval(expr, vars_dict))
+                except:
+                    note = "Unable to evaluate expression: incorrect format or missing variables"
 
-                    # Handle select logic
-                    if select == "max":
-                        all_results.append(max(temp_results))
-                    elif select == "min":
-                        all_results.append(min(temp_results))
-                    elif select == "unique":
-                        all_results.append(list(set(temp_results)))  # Remove duplicates
-                    elif select == "either":
-                        all_results.append(list(set(temp_results)))   # Random choice
-                    else:
-                        all_results.extend(temp_results)  # Default to store all results
-                        
-                    # If `select_info` has a value, use it; if empty, default to "unique requirements not specified"
-                    if select_info:
-                        constraint_note = select_info
-                    elif constraint_note is None: 
-                        constraint_note = "unique requirements not specified"
+        if not values:
+            return None, note
 
-            except Exception:
-                return "OZFS Error", None, None
-            
-        # Unified return value
-        return (all_results[0] if len(all_results) == 1 else all_results) if all_results else "OZFS Error", constraint_note, select_value
+        # Single vs multiple values
+        if len(values) == 1:
+            return values[0], note
 
-    def process_zoning_constraints(result, tidybuilding):
-        district_constraints = result["district_constraints"]
-        bldg_type = find_bldg_type(tidybuilding)
-        results = []
-        context = {**result}  # Get all calculated results
-        for _, constraint in district_constraints.iterrows():
-            if bldg_type not in constraint["use_name"]:
-                continue
-            min_val_expression = constraint.get("min_val", None)
-            max_val_expression = constraint.get("max_val", None)
-            constraint_min_val, constraint_min_note, min_select = evaluate_conditions_and_expressions(min_val_expression, context) if min_val_expression else (None, None, None)
-            constraint_max_val, constraint_max_note, max_select = evaluate_conditions_and_expressions(max_val_expression, context) if max_val_expression else (None, None, None)
+        # Multiple: respect min_max if present
+        mm = val_list[selected_ids[0]].get('min_max')
+        if mm == 'min':
+            return min(values), note
+        elif mm == 'max':
+            return max(values), note
+        else:
+            return (min(values), max(values)), "multiple expressions with insufficient conditions"
 
-            results.append({
-                "constraint_type": constraint.get("source_column", None),
-                "spec_type": constraint.get("constraint_type", None),
-                "min_value": constraint_min_val,
-                "max_value": constraint_max_val,
-                "unit": constraint.get("unit", None),
-                "constraint_min_note": constraint_min_note if constraint_min_note  else None,
-                "constraint_max_note": constraint_max_note if constraint_max_note else None,
-                "min_select": min_select if min_select else None,
-                "max_select": max_select if max_select else None
-            })
-        return pd.DataFrame(results)
+    # 3. Collect results
+    min_values, max_values, min_notes, max_notes = [], [], [], []
+    for cname, cdef in constraints_dict.items():
+        min_val, min_note = _process_val_list(cdef.get('min_val', []))
+        max_val, max_note = _process_val_list(cdef.get('max_val', []))
 
-    result = zoning_extract(tidybuilding, tidyzoning, tidyparcel)
-    processed_constraints = process_zoning_constraints(result, tidybuilding)
-    if processed_constraints.empty:
-        return processed_constraints
+        # Round numeric values
+        if isinstance(min_val, (int, float)):
+            min_val = round(min_val, 4)
+        if isinstance(max_val, (int, float)):
+            max_val = round(max_val, 4)
 
-    # now it's safe to dropna and squeeze
-    processed_constraints = processed_constraints.dropna(
-        subset=['min_value','max_value'], how='all'
-    ).reset_index(drop=True)
+        min_values.append(min_val)
+        max_values.append(max_val)
+        min_notes.append(min_note)
+        max_notes.append(max_note)
 
-    for col in ['min_value','max_value']:
-        # def squeeze(vals):
-        #     if isinstance(vals, list) and vals:
-        #         return [min(vals), max(vals)]
-        #     return vals
-        def squeeze(vals):
-            if isinstance(vals, list) and vals:
-                # flatten any nested lists:
-                flat = []
-                for v in vals:
-                    if isinstance(v, list):
-                        flat.extend(v)
-                    else:
-                        flat.append(v)
-                return [min(flat), max(flat)]
-            return vals
+    # 4. Build DataFrame
+    df = pd.DataFrame({
+        'constraint_name': list(constraints_dict.keys()),
+        'min_value': min_values,
+        'max_value': max_values,
+        'min_val_error': min_notes,
+        'max_val_error': max_notes,
+    })
 
-        processed_constraints[col] = processed_constraints[col].apply(squeeze)
-    return processed_constraints
+    return df
