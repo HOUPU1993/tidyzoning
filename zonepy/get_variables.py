@@ -37,7 +37,7 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
     # Step 4: Extract and calculate building variables
     bldg_depth = bldg_json['bldg_info']['depth']
     bldg_width = bldg_json['bldg_info']['width']
-    dist_abbr = district_data['dist_abbr']
+    dist_abbr = district_data['dist_abbr'].iloc[0]
     fl_area = level_info_df['gross_fl_area'].sum()
     fl_area_first = level_info_df[level_info_df['level'] == 1]['gross_fl_area'].sum() if len(level_info_df[level_info_df['level'] == 1]) == 1 else 0
     fl_area_top = level_info_df[level_info_df['level'] == level_info_df['level'].max()]['gross_fl_area'].sum() if level_info_df['level'].max() > 1 else 0
@@ -47,9 +47,9 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
     height_plate = bldg_json['bldg_info']['height_plate']
     height_top = bldg_json['bldg_info']['height_top']
     height_tower = bldg_json['bldg_info'].get('height_tower', 0)
-    lot_area = parcel_data['lot_area']
-    lot_depth = parcel_data['lot_depth']
-    lot_width = parcel_data['lot_width']
+    lot_area = parcel_data['lot_area'].iloc[0]
+    lot_depth = parcel_data['lot_depth'].iloc[0]
+    lot_width = parcel_data['lot_width'].iloc[0]
     max_unit_size = unit_info_df['fl_area'].max()
     min_unit_size = unit_info_df['fl_area'].min()
     n_ground_entry = unit_info_df[unit_info_df['entry_level'] == 1]['qty'].sum()
