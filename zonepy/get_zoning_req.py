@@ -1,5 +1,6 @@
 import json
 import pandas as pd
+from zonepy import get_variables
 
 def get_zoning_req(district_data, bldg_data=None, parcel_data=None, zoning_data=None, vars=None):
     """
@@ -17,8 +18,8 @@ def get_zoning_req(district_data, bldg_data=None, parcel_data=None, zoning_data=
     """
     # 1. Load constraints JSON
     district = district_data.iloc[0]
-    constraints_series = district.get('constraints')
-    constraints_dict = dict(constraints_series)
+    constraints_dict = district.get('constraints')
+    # constraints_dict = dict(constraints_series)
     if not constraints_dict or constraints_dict in ("NA",):
         return "No zoning requirements recorded for this district"
 
@@ -26,7 +27,7 @@ def get_zoning_req(district_data, bldg_data=None, parcel_data=None, zoning_data=
     if vars is None:
         vars = get_variables(bldg_data, parcel_data, district_data, zoning_data)
     # Ensure we have a plain dict for eval context
-    vars_dict = dict(vars)
+    vars_dict = vars.iloc[0].to_dict()
 
     def _process_val_list(val_list):
         """Return (value, note) for a list of constraint entries."""
