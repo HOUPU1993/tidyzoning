@@ -2,7 +2,7 @@ import geopandas as gpd
 import os
 from zonepy import zp_find_district_idx
 
-def zp_read_pcl(path, dist, trans_crs=None):
+def zp_read_pcl(path, dist):
     """
     Reads a parcel GeoJSON (or any geospatial file), reprojects it to a specified CRS 
     (either user-provided or automatically determined via get_crs), then computes and merges 
@@ -25,10 +25,7 @@ def zp_read_pcl(path, dist, trans_crs=None):
     """
 
     # 1. Determine target CRS: if trans_crs is provided, use it; otherwise call get_crs()
-    if trans_crs is not None:
-        target_crs = trans_crs
-    else:
-        target_crs = dist.crs
+    target_crs = dist.crs
 
     # 2. Reproject to the target CRS
     parcel_gdf = gpd.read_file(path)

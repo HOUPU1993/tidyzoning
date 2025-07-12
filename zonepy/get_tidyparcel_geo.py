@@ -1,6 +1,6 @@
 import geopandas as gpd
 
-def get_tidyparcel_geo(parcels_gdf):
+def zp_get_parcel_geo(parcels_gdf):
     """
     Isolate dimensional rows from tidyparcel data.
 

@@ -1,4 +1,4 @@
-def get_tidyparcel_dim(parcels_gdf):
+def zp_get_parcel_dim(parcels_gdf):
     """
     Isolate dimensional rows from tidyparcel data.
 

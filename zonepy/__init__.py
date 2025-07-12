@@ -3,6 +3,8 @@ from .zp_find_district_idx import zp_find_district_idx
 from .zp_read_dist import zp_read_dist
 from .zp_read_bldg import zp_read_bldg
 from .zp_read_pcl import zp_read_pcl
+from .zp_get_parcel_dim import zp_get_parcel_dim
+from .zp_get_parcel_geo import zp_get_parcel_geo
 
 
 from .find_bldg_type import find_bldg_type
@@ -30,7 +32,5 @@ from .parcel_in_nonconfidence import parcel_in_nonconfidence
 from .generate_parcel_info import generate_parcel_info
 from .compare_id_differences import compare_id_differences
 from .process_all_districts import process_all_districts
-from .get_tidyparcel_dim import get_tidyparcel_dim
-from .get_tidyparcel_geo import get_tidyparcel_geo
 from .get_variables import get_variables
 from .zp_get_unit_info import zp_get_unit_info
