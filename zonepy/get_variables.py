@@ -2,6 +2,25 @@ import json
 import pandas as pd
 
 def get_variables(bldg_data, parcel_data, district_data, zoning_data):
+ """
+    Assemble all OZFS-derived variables into a single-row DataFrame.
+
+    Parameters
+    ----------
+    bldg_data : str or dict
+        Path to a .bldg JSON file or a dict already parsed from it.
+    parcel_data : pd.DataFrame
+        One-row DataFrame of parcel attributes (must include lot_area, lot_depth, lot_width, etc.).
+    district_data : pd.DataFrame
+        One-row DataFrame of zoning district (must include dist_abbr).
+    zoning_data : str or dict
+        Path to a .zoning JSON file or a dict already parsed from it.
+
+    Returns
+    -------
+    pd.DataFrame
+        One-row DataFrame containing every variable defined in the R version.
+    """
     # Step 1: Load zoning data
     if isinstance(zoning_data, str):
         try:

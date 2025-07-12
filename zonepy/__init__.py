@@ -5,7 +5,7 @@ from .zp_read_bldg import zp_read_bldg
 from .zp_read_pcl import zp_read_pcl
 from .zp_get_parcel_dim import zp_get_parcel_dim
 from .zp_get_parcel_geo import zp_get_parcel_geo
-
+from .zp_get_dist_def import zp_get_dist_def
 
 from .find_bldg_type import find_bldg_type
 from .check_land_use import check_land_use
