@@ -14,7 +14,7 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 # input my libraries
-from zonepy import find_district_idx
+from zonepy import zp_find_district_idx
 from zonepy import find_bldg_type
 from zonepy import check_land_use
 from zonepy import get_zoning_req
@@ -29,7 +29,7 @@ from zonepy import check_height_eave
 from zonepy import check_unit_qty
 from zonepy import add_setbacks
 from zonepy import get_buildable_area
-from zonepy import unify_tidybuilding
+# from zonepy import unify_tidybuilding
 from zonepy import filter_constraints
 from zonepy import check_zoning_process
 from zonepy import parcels_in_zoning
