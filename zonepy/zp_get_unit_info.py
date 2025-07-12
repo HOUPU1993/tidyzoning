@@ -2,7 +2,7 @@ import json
 from typing import Union, Dict, Any
 import pandas as pd
 
-def get_unit_info(bldg_data: Union[str, Dict[str, Any]]) -> pd.DataFrame:
+def zp_get_unit_info(bldg_data: Union[str, Dict[str, Any]]) -> pd.DataFrame:
     """
     Create a DataFrame with unit info from an OZFS building JSON.
 

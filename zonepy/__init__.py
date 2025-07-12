@@ -32,4 +32,4 @@ from .get_tidyparcel_dim import get_tidyparcel_dim
 from .get_tidyparcel_geo import get_tidyparcel_geo
 from .get_crs import get_crs
 from .get_variables import get_variables
-from .get_unit_info import get_unit_info
+from .zp_get_unit_info import zp_get_unit_info
