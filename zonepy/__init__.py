@@ -6,6 +6,7 @@ from .zp_read_pcl import zp_read_pcl
 from .zp_get_parcel_dim import zp_get_parcel_dim
 from .zp_get_parcel_geo import zp_get_parcel_geo
 from .zp_get_dist_def import zp_get_dist_def
+from .zp_get_unit_info import zp_get_unit_info
 
 from .find_bldg_type import find_bldg_type
 from .check_land_use import check_land_use
@@ -33,4 +34,3 @@ from .generate_parcel_info import generate_parcel_info
 from .compare_id_differences import compare_id_differences
 from .process_all_districts import process_all_districts
 from .get_variables import get_variables
-from .zp_get_unit_info import zp_get_unit_info
