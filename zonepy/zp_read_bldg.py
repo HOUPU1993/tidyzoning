@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 
-def unify_tidybuilding(bldg_data_file=None, ozfs_data_file=None, bldg_data_string=None):
+def zp_read_bldg(bldg_data_file=None, ozfs_data_file=None, bldg_data_string=None):
     """
     Get summarized building info in one DataFrame row.
 

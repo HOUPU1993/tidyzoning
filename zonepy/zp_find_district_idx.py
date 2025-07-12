@@ -1,7 +1,7 @@
 import geopandas as gpd  
 import pandas as pd     
 
-def find_district_idx(tidyparcel, tidyzoning):
+def zp_find_district_idx(tidyparcel, tidyzoning):
     """
     Optimized version: Find the indices of the districts in `tidyzoning` that contain the centroids of the `tidyparcel`.
 

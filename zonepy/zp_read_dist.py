@@ -1,9 +1,9 @@
 import geopandas as gpd
 import os
 from shapely.geometry import Polygon, Point, LineString, MultiPolygon, MultiLineString
-from zonepy.get_crs import get_crs
+from zonepy.zp_get_crs import zp_get_crs
 
-def read_dist(path, trans_crs=None, index_col="zoning_id"):
+def zp_read_dist(path, trans_crs=None, index_col="zoning_id"):
     """
     Reads a district GeoJSON (or any geospatial file), drops rows with missing or invalid geometry,
     reprojects to a chosen CRS (either user-provided or automatically determined via get_crs),

@@ -1,7 +1,7 @@
 import geopandas as gpd
 import os
 
-def get_crs(geom_data, large_area=False):
+def zp_get_crs(geom_data, large_area=False):
     """
     Finds EPSG code for State Plane CRS.
     get_crs() uses state plane geometry to find an appropriate NAD83 CRS for the input geometry.
