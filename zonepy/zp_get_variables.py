@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 
-def get_variables(bldg_data, parcel_data, district_data, zoning_data):
+def zp_get_variables(bldg_data, parcel_data, district_data, zoning_data):
 
     # Step 1: Load zoning data
     if isinstance(zoning_data, str):
@@ -12,7 +12,7 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
         except:
             raise ValueError("The zoning_data file path does not seem to be in json format")
     elif isinstance(zoning_data, dict):
-        zoning_defs = zoning_data['definitions']
+        zoning_defs = zoning_data
     else:
         raise ValueError("Improper input: zoning_data")
 
@@ -38,6 +38,7 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
     # Step 4: Extract and calculate building variables
     bldg_depth = bldg_json['bldg_info']['depth']
     bldg_width = bldg_json['bldg_info']['width']
+    footprint = bldg_depth * bldg_width  
     dist_abbr = district_data['dist_abbr'].iloc[0]
     fl_area = level_info_df['gross_fl_area'].sum()
     fl_area_first = level_info_df[level_info_df['level'] == 1]['gross_fl_area'].sum() if len(level_info_df[level_info_df['level'] == 1]) == 1 else 0
@@ -51,6 +52,7 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
     lot_area = parcel_data['lot_area'].iloc[0]
     lot_depth = parcel_data['lot_depth'].iloc[0]
     lot_width = parcel_data['lot_width'].iloc[0]
+    lot_type = parcel_data['lot_type'].iloc[0]
     max_unit_size = unit_info_df['fl_area'].max()
     min_unit_size = unit_info_df['fl_area'].min()
     n_ground_entry = unit_info_df[unit_info_df['entry_level'] == 1]['qty'].sum()
@@ -58,6 +60,7 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
     parking_enclosed = bldg_json['bldg_info'].get('parking', 0)
     roof_type = bldg_json['bldg_info'].get('roof_type', 'flat')
     sep_platting = bldg_json['bldg_info'].get('sep_platting', False)
+    unit_separation = bldg_json['bldg_info'].get('unit_separation', 'open_area')
     total_bedrooms = (unit_info_df['bedrooms'] * unit_info_df['qty']).sum()
     total_units = unit_info_df['qty'].sum()
     units_0bed = unit_info_df[unit_info_df['bedrooms'] == 0]['qty'].sum()
@@ -65,6 +68,14 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
     units_2bed = unit_info_df[unit_info_df['bedrooms'] == 2]['qty'].sum()
     units_3bed = unit_info_df[unit_info_df['bedrooms'] == 3]['qty'].sum()
     units_4bed = unit_info_df[unit_info_df['bedrooms'] > 3]['qty'].sum()
+    unit_pct_0bed = units_0bed / total_units
+    unit_pct_1bed = units_1bed / total_units 
+    unit_pct_2bed = units_2bed / total_units 
+    unit_pct_3bed = units_3bed / total_units 
+    unit_pct_4bed = units_4bed / total_units
+    unit_size_avg = float(unit_info_df['fl_area'].mean())
+    lot_cov_bldg = (footprint / (lot_area * 43560)) * 100
+    unit_density = total_units / lot_area
     far = fl_area / (lot_area * 43560)
 
     # Step 5: Construct the resulting DataFrame
@@ -84,6 +95,7 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
         'lot_area': [lot_area],
         'lot_depth': [lot_depth],
         'lot_width': [lot_width],
+        'lot_type': [lot_type],
         'max_unit_size': [max_unit_size],
         'min_unit_size': [min_unit_size],
         'n_ground_entry': [n_ground_entry],
@@ -91,6 +103,7 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
         'parking_enclosed': [parking_enclosed],
         'roof_type': [roof_type],
         'sep_platting': [sep_platting],
+        'unit_separation': [unit_separation],
         'total_bedrooms': [total_bedrooms],
         'total_units': [total_units],
         'units_0bed': [units_0bed],
@@ -98,6 +111,14 @@ def get_variables(bldg_data, parcel_data, district_data, zoning_data):
         'units_2bed': [units_2bed],
         'units_3bed': [units_3bed],
         'units_4bed': [units_4bed],
+        'unit_pct_0bed': [unit_pct_0bed],
+        'unit_pct_1bed': [unit_pct_1bed],
+        'unit_pct_2bed': [unit_pct_2bed],
+        'unit_pct_3bed': [unit_pct_3bed],
+        'unit_pct_4bed': [unit_pct_4bed],
+        'unit_size_avg': [unit_size_avg],
+        'lot_cov_bldg': [lot_cov_bldg],
+        'unit_density': [unit_density], 
         'far': [far]
     })
 

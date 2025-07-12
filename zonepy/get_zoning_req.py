@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from zonepy import get_variables
+from zonepy import zp_get_variables
 
 def get_zoning_req(district_data, bldg_data=None, parcel_data=None, zoning_data=None, vars=None):
     """
