@@ -8,6 +8,7 @@ from .zp_get_parcel_geo import zp_get_parcel_geo
 from .zp_get_dist_def import zp_get_dist_def
 from .zp_get_unit_info import zp_get_unit_info
 from .zp_get_variables import zp_get_variables
+from .zp_get_zoning_req import zp_get_zoning_req
 
 from .find_bldg_type import find_bldg_type
 from .check_land_use import check_land_use

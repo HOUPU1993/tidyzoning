@@ -20,17 +20,25 @@ def get_zoning_req(district_data, bldg_data=None, parcel_data=None, zoning_data=
     district = district_data.iloc[0]
     constraints_dict = district.get('constraints')
     # constraints_dict = dict(constraints_series)
-    if not constraints_dict or constraints_dict in ("NA",):
+    if constraints_dict is None or pd.isna(constraints_dict):
+        return "No zoning requirements recorded for this district"
+ 
+    # 2. drop the special 'unit_size' key if present
+    constraints_dict.pop('unit_size', None)
+    if not constraints_dict:
         return "No zoning requirements recorded for this district"
 
-    # 2. Load variables or computer if needed
+    # 3. Load variables or computer if needed
     if vars is None:
-        vars = get_variables(bldg_data, parcel_data, district_data, zoning_data)
+        vars = zp_get_variables(bldg_data, parcel_data, district_data, zoning_data)
     # Ensure we have a plain dict for eval context
     vars_dict = vars.iloc[0].to_dict()
 
     def _process_val_list(val_list):
-        """Return (value, note) for a list of constraint entries."""
+        """
+        Given a list of dicts with 'condition' and 'expression',
+        choose the matching one, eval its expressions, and return (value, note).
+        """
         if not val_list:
             return None, None
         true_id = None
