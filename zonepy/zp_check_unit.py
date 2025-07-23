@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from zonepy import zp_get_unit_info
 
-def zp_check_unit_size(district_data, bldg_data, vars):
+def zp_check_unit(district_data, bldg_data, vars):
     """
     Python equivalent of zr_check_unit()
 
