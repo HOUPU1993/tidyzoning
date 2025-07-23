@@ -59,10 +59,10 @@ def zp_get_zoning_req(district_data, bldg_data=None, parcel_data=None, zoning_da
                         results.append(eval(cond, vars_dict))
                     except:
                         results.append("MAYBE")
-                if all(r is True for r in results):
+                if all(r == True for r in results):
                     true_id = idx
                     break
-                elif any(r is False for r in results):
+                elif any(r == False for r in results):
                     continue
                 else:
                     maybe_ids.append(idx)
