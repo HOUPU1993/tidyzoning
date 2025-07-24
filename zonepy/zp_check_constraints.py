@@ -26,7 +26,7 @@ def zp_check_constraints(vars,
         Columns: constraint_name, allowed, (optional) warning
     """
 
-    # --- 1. Default checks list (same as R default) ---
+    # --- 0. Default checks list (same as R default) ---
     if checks is None:
         checks = [
             "far", 
@@ -54,6 +54,13 @@ def zp_check_constraints(vars,
             "total_units", 
             "unit_size_avg"
         ]
+
+    # --- 1. If zoning_req is a string, all checks are allowed by default (allowed=True) ---
+    if isinstance(zoning_req, str):
+        return pd.DataFrame({
+            "constraint_name": checks,
+            "allowed": [True] * len(checks)
+        })
 
     # --- 2. Keep only constraints in checks ---
     filtered_req = zoning_req[zoning_req['constraint_name'].isin(checks)].copy()
