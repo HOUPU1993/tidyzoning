@@ -11,6 +11,7 @@ from .zp_get_variables import zp_get_variables
 from .zp_get_zoning_req import zp_get_zoning_req
 from .zp_check_unit import zp_check_unit
 from .zp_check_res_type import zp_check_res_type
+from .zp_check_constraints import zp_check_constraints
 
 from .find_bldg_type import find_bldg_type
 from .check_land_use import check_land_use
