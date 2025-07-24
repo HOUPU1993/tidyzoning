@@ -43,8 +43,15 @@ def zp_check_unit(district_data, bldg_data, vars):
     vars_dict = vars.iloc[0].to_dict()
 
     # Helpers --------------------------------------------------
+    def _to_list(x):
+        """Ensure x is a list; string -> [string], None -> []"""
+        if x is None:
+            return []
+        if isinstance(x, str):
+            return [x]
+        return list(x)
+
     def _eval_expressions(expressions):
-        """Evaluate a list of expression strings; return (values_list, note or None)."""
         vals = []
         note = None
         for expr in expressions:
@@ -66,19 +73,18 @@ def zp_check_unit(district_data, bldg_data, vars):
         if not val_list:
             return None, None
 
-        # R behavior: if only one item, pick it, regardless of condition
+        # single item → take directly
         if len(val_list) == 1:
             item = val_list[0]
-            values, note = _eval_expressions(item.get('expression', []))
+            values, note = _eval_expressions(_to_list(item.get('expression')))
             return _finalize_values(values, item.get('min_max')), note
 
         true_id = None
         maybe_ids = []
 
         for idx, item in enumerate(val_list):
-            conds = item.get('condition')
-            # If no condition, R doesn't explicitly flag it; we treat as MAYBE (can't be sure).
-            if conds is None:
+            conds = _to_list(item.get('condition'))  # <-- 改动1：统一成列表
+            if not conds:
                 maybe_ids.append(idx)
                 continue
 
@@ -101,11 +107,10 @@ def zp_check_unit(district_data, bldg_data, vars):
         if not selected_ids:
             return None, "No constraint conditions met"
 
-        # Evaluate expressions from selected items
         note = None
         values = []
         for idx in selected_ids:
-            exprs = val_list[idx].get('expression', [])
+            exprs = _to_list(val_list[idx].get('expression', []))  # <-- 改动2：统一成列表
             v, n = _eval_expressions(exprs)
             if n and not note:
                 note = n
@@ -133,7 +138,14 @@ def zp_check_unit(district_data, bldg_data, vars):
         mn, mx = min(values), max(values)
         return mn if mn == mx else (mn, mx)
 
-    # ----------------------------------------------------------
+    def _round_if_num(v):
+        if isinstance(v, (int, float)):
+            return round(v, 4)
+        if isinstance(v, tuple):
+            return tuple(round(x, 4) for x in v)
+        return v
+    
+    # Main Loop----------------------------------------------------------
 
     # Prepare columns
     grouped['min_val'] = None
@@ -156,13 +168,6 @@ def zp_check_unit(district_data, bldg_data, vars):
         max_val, max_note = _process_val_list(constraint_list.get('max_val', []))
 
         # Store numeric with rounding like R (4 decimals)
-        def _round_if_num(v):
-            if isinstance(v, (int, float)):
-                return round(v, 4)
-            if isinstance(v, tuple):
-                return tuple(round(x, 4) for x in v)
-            return v
-
         min_val = _round_if_num(min_val)
         max_val = _round_if_num(max_val)
 
@@ -209,6 +214,10 @@ def _compare_side(actual_min, actual_max, req, op='>='):
     def cmp(a, b, oper):
         return (a >= b) if oper == '>=' else (a <= b)
 
+    # transfer list into tuple
+    if isinstance(req, list):
+        req = tuple(req)
+        
     # the turple range value
     if isinstance(req, tuple) and len(req) == 2:
         r1, r2 = req
