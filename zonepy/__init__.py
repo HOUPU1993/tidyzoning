@@ -15,6 +15,7 @@ from .zp_check_constraints import zp_check_constraints
 from .zp_add_setbacks import zp_add_setbacks
 from .zp_get_buildable_area import zp_get_buildable_area
 from .zp_check_fit import zp_check_fit
+from .possible_checks import possible_checks
 
 from .find_bldg_type import find_bldg_type
 from .check_land_use import check_land_use
