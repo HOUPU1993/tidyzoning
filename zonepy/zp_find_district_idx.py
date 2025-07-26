@@ -28,11 +28,13 @@ def zp_find_district_idx(tidyparcel, tidyzoning):
     joined = gpd.sjoin(centroid_rows, tidyzoning, how='left', predicate='within')
 
     # Create the DataFrame directly with required columns
-    results_df = pd.DataFrame({
+    df_pairs = pd.DataFrame({
         "parcel_id": joined["parcel_id"],
         "zoning_id": joined["zoning_id"]
     })
 
+    # 4. Define a helper to collapse multiple matches into list,
+    #    single matches to scalar, and no matches to NaN
     def collapse_zoning_ids(ids):
         clean = [v for v in ids if pd.notnull(v)]
         if len(clean) > 1:
@@ -42,11 +44,17 @@ def zp_find_district_idx(tidyparcel, tidyzoning):
         else:
             return np.nan
 
-    result = (
-        results_df[["parcel_id", "zoning_id"]]
-        .groupby("parcel_id", as_index=False)["zoning_id"]
+    # 5. Aggregate zoning_id by parcel_id
+    agg_df = (
+        df_pairs
+        .groupby('parcel_id', as_index=False)['zoning_id']
         .agg(collapse_zoning_ids)
     )
 
+    # 6. Map the aggregated results back onto the original centroids,
+    #    preserving the original index
+    zoning_map = dict(zip(agg_df['parcel_id'], agg_df['zoning_id']))
+    result = centroid_rows[['parcel_id']].copy()
+    result['zoning_id'] = result['parcel_id'].map(zoning_map)
+
     return result
-   
