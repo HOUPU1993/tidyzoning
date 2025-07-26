@@ -1,3 +1,4 @@
+import numpy as np
 import geopandas as gpd  
 import pandas as pd     
 
@@ -32,5 +33,21 @@ def zp_find_district_idx(tidyparcel, tidyzoning):
         "zoning_id": joined["zoning_id"]
     })
 
-    return results_df
+    def collapse_zoning_ids(ids):
+        clean = [v for v in ids if pd.notnull(v)]
+        if len(clean) > 1:
+            return clean
+        elif len(clean) == 1:
+            return clean[0]
+        else:
+            return np.nan
+
+    result = (
+        results_df[["parcel_id", "zoning_id"]]
+        .groupby("parcel_id", as_index=False)["zoning_id"]
+        .agg(collapse_zoning_ids)
+    )
+
+    return result
+   
    
