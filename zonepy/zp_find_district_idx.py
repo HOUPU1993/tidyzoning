@@ -29,68 +29,8 @@ def zp_find_district_idx(tidyparcel, tidyzoning):
     # Create the DataFrame directly with required columns
     results_df = pd.DataFrame({
         "parcel_id": joined["parcel_id"],
-        "zoning_id": joined["index_right"]
+        "zoning_id": joined["zoning_id"]
     })
 
     return results_df
-    
-# import geopandas as gpd
-# import pandas as pd
-
-# def zp_find_district_idx(tidyparcel: gpd.GeoDataFrame,
-#                          tidyzoning: gpd.GeoDataFrame) -> pd.DataFrame:
-#     """
-#     Find each parcel's zoning_id(s) by its centroid.
-#     - 如果一个 parcel 的 centroid 落在多个 zoning 区块内，
-#       则 zoning_id 返回一个列表 [id1, id2, ...]。
-#     - 如果只落在一个区块内，返回那个标量 id。
-#     - 如果没有落在任何区块，返回 None。
-
-#     Parameters
-#     ----------
-#     tidyparcel : GeoDataFrame
-#         必须含列 'parcel_id', 'side', 'geometry'，且有 side=='centroid' 的行。
-#     tidyzoning : GeoDataFrame
-#         zoning district 图层，其 index 就是 zoning_id。
-
-#     Returns
-#     -------
-#     DataFrame with columns:
-#       parcel_id, zoning_id
-#     """
-#     # 1. 取出所有 centroid 行
-#     centroids = tidyparcel[tidyparcel['side'] == 'centroid']
-#     if centroids.empty:
-#         return pd.DataFrame(columns=['parcel_id', 'zoning_id'])
-
-#     # 2. 空间连接，得到每个 centroid 属于哪些 zoning 区
-#     joined = gpd.sjoin(
-#         centroids[['parcel_id', 'geometry']],
-#         tidyzoning[['zoning_id', 'geometry']],
-#         how='left',
-#         predicate='within'
-#     )
-
-#     # 把 NaN 变 None
-#     joined['index_right'] = joined['index_right'].where(
-#         joined['index_right'].notna(), None
-#     )
-
-#     # 3. 分组聚合
-#     def collect(ids):
-#         # 丢掉 NaN
-#         vals = [int(v) for v in ids if pd.notna(v)]
-#         if not vals:
-#             return None
-#         if len(vals) == 1:
-#             return vals[0]
-#         return vals
-
-
-#     out = (
-#         joined
-#         .groupby('parcel_id')['zoning_id']
-#         .agg(collect)
-#     )
-
-#     return out
+   

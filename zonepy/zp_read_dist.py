@@ -42,6 +42,6 @@ def zp_read_dist(path, trans_crs=None, index_col="zoning_id"):
 
     # 4. Reset index and assign zoning_id
     # dist_gdf = dist_gdf.reset_index(drop=True)
-    dist_gdf[index_col] = dist_gdf.index.astype(float)
+    dist_gdf[index_col] = dist_gdf.index.astype(str)
 
     return dist_gdf
