@@ -46,7 +46,7 @@ def zp_get_parcel_dim(parcels_gdf):
 
     # 6. Keep only required columns (including geometry)
     result = parcels_dim[
-        ["parcel_id", "lot_width", "lot_depth", "lot_area", "lot_type", "conf", "zoning_id"]
+        ["parcel_id", "lot_width", "lot_depth", "lot_area", "lot_type", "conf", "geometry", "zoning_id"]
     ].reset_index(drop=True)
 
     return result
