@@ -1,38 +1,38 @@
-import geopandas as gpd  
-import pandas as pd     
+# import geopandas as gpd  
+# import pandas as pd     
 
 # def zp_find_district_idx(tidyparcel, tidyzoning):
-    # """
-    # Optimized version: Find the indices of the districts in `tidyzoning` that contain the centroids of the `tidyparcel`.
+#     """
+#     Optimized version: Find the indices of the districts in `tidyzoning` that contain the centroids of the `tidyparcel`.
 
-    # Parameters:
-    # tidyparcel (GeoDataFrame): A GeoDataFrame representing the parcel.
-    #                            Must include rows with 'centroid' in the 'side' column.
-    # tidyzoning (GeoDataFrame): A GeoDataFrame representing zoning districts with geometries.
+#     Parameters:
+#     tidyparcel (GeoDataFrame): A GeoDataFrame representing the parcel.
+#                                Must include rows with 'centroid' in the 'side' column.
+#     tidyzoning (GeoDataFrame): A GeoDataFrame representing zoning districts with geometries.
 
-    # Returns:
-    #                 Prop_ID and Pacel_id are from Tidyparcel
-    #                 tidyzoning_index are from Tidyzoning
-    #                 (Prop_ID, parcel_id, tidyzoning_index) if a match is found, or (Prop_ID, parcel_id, None) if no match is found.
-    # How to use:
-    # find_district_idx_results = find_district_idx(tidyparcel, tidyzoning)
-    # """
-    # # Filter rows with centroids
-    # centroid_rows = tidyparcel[tidyparcel['side'] == 'centroid']
-    # if centroid_rows.empty:
-    #     print("No centroids found in tidyparcel.")
-    #     return []
+#     Returns:
+#                     Prop_ID and Pacel_id are from Tidyparcel
+#                     tidyzoning_index are from Tidyzoning
+#                     (Prop_ID, parcel_id, tidyzoning_index) if a match is found, or (Prop_ID, parcel_id, None) if no match is found.
+#     How to use:
+#     find_district_idx_results = find_district_idx(tidyparcel, tidyzoning)
+#     """
+#     # Filter rows with centroids
+#     centroid_rows = tidyparcel[tidyparcel['side'] == 'centroid']
+#     if centroid_rows.empty:
+#         print("No centroids found in tidyparcel.")
+#         return []
 
-    # # Perform spatial join to find matches
-    # joined = gpd.sjoin(centroid_rows, tidyzoning, how='left', predicate='within')
+#     # Perform spatial join to find matches
+#     joined = gpd.sjoin(centroid_rows, tidyzoning, how='left', predicate='within')
 
-    # # Create the DataFrame directly with required columns
-    # results_df = pd.DataFrame({
-    #     "parcel_id": joined["parcel_id"],
-    #     "zoning_id": joined["index_right"]
-    # })
+#     # Create the DataFrame directly with required columns
+#     results_df = pd.DataFrame({
+#         "parcel_id": joined["parcel_id"],
+#         "zoning_id": joined["index_right"]
+#     })
 
-    # return results_df
+#     return results_df
     
 import geopandas as gpd
 import pandas as pd
@@ -63,10 +63,10 @@ def zp_find_district_idx(tidyparcel: gpd.GeoDataFrame,
     if centroids.empty:
         return pd.DataFrame(columns=['parcel_id', 'zoning_id'])
 
-    # 2. 空间连接，得到每个 centroid 属于哪些 zoning 区（index_right）
+    # 2. 空间连接，得到每个 centroid 属于哪些 zoning 区
     joined = gpd.sjoin(
         centroids[['parcel_id', 'geometry']],
-        tidyzoning[['geometry']],
+        tidyzoning[['zoning_id', 'geometry']],
         how='left',
         predicate='within'
     )
@@ -77,24 +77,20 @@ def zp_find_district_idx(tidyparcel: gpd.GeoDataFrame,
     )
 
     # 3. 分组聚合
-    def agg_ids(ids):
-        # 先过滤掉 None
-        clean = [int(i) for i in ids if i is not None]
-        if len(clean) == 0:
+    def collect(ids):
+        # 丢掉 NaN
+        vals = [int(v) for v in ids if pd.notna(v)]
+        if not vals:
             return None
-        if len(clean) == 1:
-            return clean[0]
-        # 多于一个，返回列表
-        return clean
+        if len(vals) == 1:
+            return vals[0]
+        return vals
 
-    agg = (
+
+    out = (
         joined
-        .groupby('parcel_id', sort=False)['index_right']
-        .agg(agg_ids)
-        .reset_index()
-        .rename(columns={'index_right': 'zoning_id'})
+        .groupby('parcel_id')['zoning_id']
+        .agg(collect)
     )
 
-    # 4. 保证每个 centroid 至少出现一行（对 0、1 个匹配外的情形已处理）
-    #    这里不用再补全，因为 agg_ids 已经对 0 个的返回 None
-    return agg
+    return out
