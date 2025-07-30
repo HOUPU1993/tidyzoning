@@ -50,7 +50,7 @@ def zp_get_crs(geom_data, large_area=False):
     
     # If not a large area, use only the first geometry
     if not large_area:
-        geom = geom.iloc[[0]].copy()
+        geom = geom.loc[~geom.geometry.is_empty].iloc[[0]].copy()
     
     # Ensure valid geometries (use buffer(0) to fix potential invalidity)
     geom["geometry"] = geom["geometry"].buffer(0)
