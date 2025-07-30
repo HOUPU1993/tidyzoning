@@ -31,6 +31,7 @@ def zp_add_setbacks(parcel_gdf: gpd.GeoDataFrame,
         'rear': 'setback_rear'
     }
     pg = parcel_gdf.copy()
+
     setbacks = []
     missing = False
     for _, row in pg.iterrows():
@@ -44,7 +45,7 @@ def zp_add_setbacks(parcel_gdf: gpd.GeoDataFrame,
             setbacks.append(match.iloc[0]['min_value'] if not match.empty else None)
     if missing:
         warnings.warn("No side label. Setbacks not considered.")
-    pg['setback'] = setbacks
+    pg['setback'] = pd.Series(setbacks, index=pg.index, dtype=object)
 
     # 4. Collect extra rules
     extra = {}
