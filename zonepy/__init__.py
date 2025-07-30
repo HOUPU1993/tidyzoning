@@ -16,30 +16,4 @@ from .zp_add_setbacks import zp_add_setbacks
 from .zp_get_buildable_area import zp_get_buildable_area
 from .zp_check_fit import zp_check_fit
 from .possible_checks import possible_checks
-
-from .find_bldg_type import find_bldg_type
-from .check_land_use import check_land_use
-from .get_zoning_req import get_zoning_req
-from .check_footprint import check_footprint
-from .check_fl_area import check_fl_area
-from .check_far import check_far
-from .check_height import check_height
-from .check_bedrooms import check_bedrooms
-from .check_lot_coverage import check_lot_coverage
-from .check_unit_density import check_unit_density
-from .check_unit_size import check_unit_size
-from .check_stories import check_stories
-from .check_height_eave import check_height_eave
-from .check_unit_qty import check_unit_qty
-from .add_setbacks import add_setbacks
-from .get_buildable_area import get_buildable_area
-from .zoning_analysis_pipeline import zoning_analysis_pipeline
-from .filter_constraints import filter_constraints
-from .check_zoning_process import check_zoning_process
-from .parcels_in_zoning import parcels_in_zoning
-from .parcel_in_confidence import parcel_in_confidence
-from .parcel_in_nonconfidence import parcel_in_nonconfidence
-from .generate_parcel_info import generate_parcel_info
-from .compare_id_differences import compare_id_differences
-from .process_all_districts import process_all_districts
-
+from .zp_run_zoning_checks import zp_run_zoning_checks
