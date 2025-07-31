@@ -34,7 +34,7 @@ def zp_read_dist(path, trans_crs=None, index_col="zoning_id"):
     if trans_crs is not None:
         target_crs = trans_crs
     else:
-        auto_epsg = zp_get_crs(path, large_area=False)
+        auto_epsg = zp_get_crs(dist_gdf, large_area=False)
         target_crs = f"EPSG:{auto_epsg}"
 
     # 3. Reproject to the target CRS
